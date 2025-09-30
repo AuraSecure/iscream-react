@@ -1,0 +1,14 @@
+{
+  "description": "Join us for music, poetry, and performances from the community every 2nd Tuesday.",
+  "location": "I Scream Ice Cream, Albuquerque",
+  "time": "68 pm",
+  "date": "2025-10-14",
+  "repeat": {
+    "until": "2026-06-09",
+    "nthWeek": 2,
+    "interval": 1,
+    "type": "monthly",
+    "dayOfWeek": 2
+  },
+  "title": "Open Mic Night"
+}
