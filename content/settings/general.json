@@ -1,7 +1,7 @@
 {
-  "businessName": "I Scream Ice Cream",
-  "address": "New Updated Address",
-  "email": "newemail@example.com",
-  "instagram": "https://instagram.com/iscreamicecreamm",
-  "hours": "Tue–Sun 12–8pm"
+  "businessName": "I Scream New Name",
+  "address": "123 Test Ave",
+  "email": "newemail@test.com",
+  "instagram": "https://instagram.com/new",
+  "hours": "MonFri 106"
 }
