@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# I Scream Ice Cream Website
 
-## Getting Started
+This repo holds the Next.js + Tailwind project for **I Scream Ice Cream** in Albuquerque, NM.  
+The site is built to be simple to update, easy to run, and flexible enough to grow with new features as we go.
 
-First, run the development server:
+---
+
+## How to run it
+
+Clone the repo and install packages:
 
 ```bash
+# (From terminal or PowerShell...inside VS Code hit Ctrl+` to open PowerShell, then enter these commands)
+git clone https://github.com/AuraSecure/iscream-react.git
+cd iscream-react
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+http://localhost:3000
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+in your browser to see the site running locally.
 
-## Learn More
+ //📂 How the content works
 
-To learn more about Next.js, take a look at the following resources:
+Instead of a heavy CMS, all content is stored as JSON files in public/content:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+public/content/settings/general.json → business info like name, address, email, Instagram, etc.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+public/content/announcements/*.json → announcements that show up on the site.
 
-## Deploy on Vercel
+public/content/events/*.json → events listed on the events page.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+API routes in src/app/api/content/ handle reading and updating these files.
+This makes the site lightweight and easy to maintain.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+🛠 Manage page
+
+Go to /manage while running locally and you’ll see the current site settings pulled from JSON.
+
+Right now they show up read-only...the next step will be making them editable with Confirm / No Changes logic.
+
+🌐 Deployment
+
+The site is built for Vercel.
+To deploy:
+
+# Steps to deploy on Vercel
+1. Log into https://vercel.com and connect your GitHub account
+2. Import the repo AuraSecure/iscream-react
+3. Use the default settings (Vercel detects Next.js automatically)
+4. After the first deploy, you’ll get a live URL like:
+   https://iscream-react.vercel.app
+5. Every push to the main branch will automatically redeploy the site
+
+🔮 Roadmap
+
+Editable fields in the /manage screen with save functionality.
+
+Authentication so only staff can update content.
+
+Calendar integration for events.
+
+Instagram feed integration.
+
+Expanded design and theming.
