@@ -13,15 +13,10 @@ async function githubRequest(path: string, options: any = {}) {
 }
 
 // GET single event
-export async function GET(
-  req: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function GET(req: Request, { params }: { params: { slug: string } }) {
   const { slug } = params;
 
-  const res = await githubRequest(
-    `content/events/${slug}.json?ref=${GITHUB_BRANCH}`
-  );
+  const res = await githubRequest(`content/events/${slug}.json?ref=${GITHUB_BRANCH}`);
 
   if (!res.ok) {
     return NextResponse.json(
@@ -35,17 +30,12 @@ export async function GET(
 }
 
 // PUT update event
-export async function PUT(
-  req: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function PUT(req: Request, { params }: { params: { slug: string } }) {
   const { slug } = params;
   const body = await req.json();
 
   // Get the current file SHA
-  const getRes = await githubRequest(
-    `content/events/${slug}.json?ref=${GITHUB_BRANCH}`
-  );
+  const getRes = await githubRequest(`content/events/${slug}.json?ref=${GITHUB_BRANCH}`);
   if (!getRes.ok) {
     return NextResponse.json(
       { error: `Event not found: ${getRes.status}` },
@@ -74,16 +64,11 @@ export async function PUT(
 }
 
 // DELETE event
-export async function DELETE(
-  req: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function DELETE(req: Request, { params }: { params: { slug: string } }) {
   const { slug } = params;
 
   // Get the current file SHA
-  const getRes = await githubRequest(
-    `content/events/${slug}.json?ref=${GITHUB_BRANCH}`
-  );
+  const getRes = await githubRequest(`content/events/${slug}.json?ref=${GITHUB_BRANCH}`);
   if (!getRes.ok) {
     return NextResponse.json(
       { error: `Event not found: ${getRes.status}` },

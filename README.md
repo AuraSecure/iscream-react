@@ -65,3 +65,4 @@ Calendar integration for events.
 Instagram feed integration.
 
 Expanded design and theming.
+```

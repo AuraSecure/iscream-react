@@ -10,11 +10,21 @@ export default function Header() {
         <span className="text-2xl font-bold">{SITE.name}</span>
       </Link>
       <nav className="ml-auto flex gap-4 text-sm">
-        <Link href="/events" className="hover:underline">Events</Link>
-        <Link href="/menu" className="hover:underline">Menu</Link>
-        <Link href="/parties" className="hover:underline">Parties</Link>
-        <Link href="/about" className="hover:underline">About</Link>
-        <Link href="/contact" className="hover:underline">Contact</Link>
+        <Link href="/events" className="hover:underline">
+          Events
+        </Link>
+        <Link href="/menu" className="hover:underline">
+          Menu
+        </Link>
+        <Link href="/parties" className="hover:underline">
+          Parties
+        </Link>
+        <Link href="/about" className="hover:underline">
+          About
+        </Link>
+        <Link href="/contact" className="hover:underline">
+          Contact
+        </Link>
       </nav>
     </header>
   );

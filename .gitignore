@@ -2,6 +2,7 @@
 node_modules
 /.pnp
 .pnp.js
+.prettierignore
 
 # next.js build
 .next
@@ -24,3 +25,6 @@ pnpm-debug.log*
 
 # misc
 .DS_Store
+
+
+

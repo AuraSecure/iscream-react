@@ -67,11 +67,7 @@
             },
           }),
           needsConfirm &&
-            h(
-              "p",
-              { style: { color: "red", fontSize: "0.8rem" } },
-              'Click "Confirm" to verify.'
-            ),
+            h("p", { style: { color: "red", fontSize: "0.8rem" } }, 'Click "Confirm" to verify.'),
         ]);
       },
     });

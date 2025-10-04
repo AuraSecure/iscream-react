@@ -34,15 +34,13 @@ const VerifiedField: React.FC<VerifiedFieldProps> = ({ label, value, onChange, w
     status === "confirmed"
       ? "bg-green-500 text-white"
       : status === "nochange"
-      ? "bg-gray-400 text-white"
-      : "bg-blue-500 text-white";
+        ? "bg-gray-400 text-white"
+        : "bg-blue-500 text-white";
 
   return (
     <div className="mb-6 relative border rounded-md p-3">
       {/* Floating gray label */}
-      <div className="absolute -top-2 left-3 bg-gray-100 px-2 text-sm font-semibold">
-        {label}
-      </div>
+      <div className="absolute -top-2 left-3 bg-gray-100 px-2 text-sm font-semibold">{label}</div>
 
       {/* Action button */}
       <button

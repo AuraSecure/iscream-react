@@ -6,10 +6,7 @@ const FILE_PATH = "content/settings/general.json"; // where your settings live
 // --- GET handler: fetch current settings ---
 export async function GET() {
   if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO || !GITHUB_BRANCH) {
-    return NextResponse.json(
-      { error: "Missing GitHub configuration" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Missing GitHub configuration" }, { status: 500 });
   }
 
   try {
@@ -40,10 +37,7 @@ export async function GET() {
 // --- PUT handler: update settings file in GitHub ---
 export async function PUT(req: Request) {
   if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO || !GITHUB_BRANCH) {
-    return NextResponse.json(
-      { error: "Missing GitHub configuration" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Missing GitHub configuration" }, { status: 500 });
   }
 
   try {

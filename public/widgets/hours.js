@@ -16,9 +16,7 @@
       },
 
       handleChange(val) {
-        this.setState({ value: val, touched: true }, () =>
-          this.props.onChange(this.state.value)
-        );
+        this.setState({ value: val, touched: true }, () => this.props.onChange(this.state.value));
       },
 
       toggleVerified() {

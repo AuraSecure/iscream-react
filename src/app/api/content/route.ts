@@ -18,7 +18,10 @@ export async function GET() {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ error: `GitHub fetch failed`, status: res.status }, { status: 500 });
+      return NextResponse.json(
+        { error: `GitHub fetch failed`, status: res.status },
+        { status: 500 }
+      );
     }
 
     const data = await res.json();

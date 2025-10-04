@@ -12,9 +12,8 @@
       },
 
       handleChange(e) {
-        this.setState(
-          { value: e.target.value, touched: true },
-          () => this.props.onChange(this.state.value)
+        this.setState({ value: e.target.value, touched: true }, () =>
+          this.props.onChange(this.state.value)
         );
       },
 
@@ -92,8 +91,7 @@
       },
     });
 
-    const Preview = (props) =>
-      h("div", {}, `Business Name: ${props.value}`);
+    const Preview = (props) => h("div", {}, `Business Name: ${props.value}`);
 
     CMS.registerWidget("business-name-verify", Control, Preview);
   }
