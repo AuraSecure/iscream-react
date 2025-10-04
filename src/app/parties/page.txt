@@ -1,0 +1,10 @@
+import { SITE } from "@/lib/site";
+export default function PartiesPage() {
+  return (
+    <div className="space-y-3">
+      <h1 className="text-3xl font-bold">Parties & Rentals</h1>
+      <p>Host your birthday or team party in our toy-packed ice-cream wonderland!</p>
+      <p>Inquiries: <a className="underline" href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
+    </div>
+  );
+}
