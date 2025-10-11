@@ -43,8 +43,7 @@ export async function getEvents(options?: RequestInit): Promise<Event[]> {
     ...options,
   });
   if (!res.ok) {
-    console.error("Failed to fetch events");
-    return [];
+    throw new Error("Failed to fetch events");
   }
   const data = await res.json();
   return data;

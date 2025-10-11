@@ -8,6 +8,8 @@ Follow these steps to get the development environment running.
 
 ### 1. Clone the Repository
 
+ANYWHERE IN THIS FILE '''bash just meeans open the command prompt CMD in window and enter commands there. You must be in the project folder
+
 ```bash
 git clone <your-repository-url>
 cd iscream-react
@@ -27,25 +29,14 @@ in your browser to see the site running locally.
 
 ### 3. Set Up Environment Variables
 
-//📂 How the content works
-This project requires environment variables to connect to the GitHub content repository.
+// 📂 How the content works
+This project uses a "Git-based CMS" approach. All website content (like events and announcements) is stored as JSON files directly within this repository in the `content/` directory.
 
-Instead of a heavy CMS, all content is stored as JSON files in public/content:
-
-1.  Make a copy of the example environment file. In your terminal, run:
-    ```bash
-    cp .env.example .env.local
-    ```
-2.  Open the newly created `.env.local` file and fill in the values:
-    - `GITHUB_OWNER`: Your GitHub username.
-    - `GITHUB_REPO`: The name of your content repository (e.g., `iscream-content`).
-    - `GITHUB_TOKEN`: A GitHub Personal Access Token. **Important:** This token must have the **`repo`** scope to allow the application to read and write content.
-
-public/content/settings/general.json → business info like name, address, email, Instagram, etc.
+`content/settings/general.json` → business info like name, address, email, Instagram, etc.
 
 ### 4. Run the Development Server
 
-public/content/announcements/\*.json → announcements that show up on the site.
+`content/announcements/*.json` → announcements that show up on the site.
 
 ```bash
 npm run dev

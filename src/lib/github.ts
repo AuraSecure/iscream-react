@@ -20,6 +20,7 @@ export async function gh<T>(path: string, init?: RequestInit): Promise<T> {
     headers: {
       Accept: "application/vnd.github+json",
       Authorization: `Bearer ${token}`,
+      "User-Agent": "I-Scream-Ice-Cream-CMS",
       "X-GitHub-Api-Version": "2022-11-28",
       ...(init?.headers || {}),
     },
