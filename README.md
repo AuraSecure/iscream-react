@@ -1,36 +1,57 @@
-# I Scream Ice Cream Website
+# I Scream Ice Cream - Website
 
-This repo holds the Next.js + Tailwind project for **I Scream Ice Cream** in Albuquerque, NM.  
-The site is built to be simple to update, easy to run, and flexible enough to grow with new features as we go.
+This is the Next.js frontend for the I Scream Ice Cream website. It uses a Git-based CMS approach, pulling content from a separate GitHub repository.
 
----
+## 🚀 Getting Started
 
-## How to run it
+Follow these steps to get the development environment running.
 
-Clone the repo and install packages:
+### 1. Clone the Repository
 
 ```bash
-# (From terminal or PowerShell...inside VS Code hit Ctrl+` to open PowerShell, then enter these commands)
-git clone https://github.com/AuraSecure/iscream-react.git
+git clone <your-repository-url>
 cd iscream-react
-npm install
-npm run dev
+```
 
 Open
 
+### 2. Install Dependencies
+
 http://localhost:3000
+
+```bash
+npm install
+```
 
 in your browser to see the site running locally.
 
- //📂 How the content works
+### 3. Set Up Environment Variables
+
+//📂 How the content works
+This project requires environment variables to connect to the GitHub content repository.
 
 Instead of a heavy CMS, all content is stored as JSON files in public/content:
 
+1.  Make a copy of the example environment file. In your terminal, run:
+    ```bash
+    cp .env.example .env.local
+    ```
+2.  Open the newly created `.env.local` file and fill in the values:
+    - `GITHUB_OWNER`: Your GitHub username.
+    - `GITHUB_REPO`: The name of your content repository (e.g., `iscream-content`).
+    - `GITHUB_TOKEN`: A GitHub Personal Access Token. **Important:** This token must have the **`repo`** scope to allow the application to read and write content.
+
 public/content/settings/general.json → business info like name, address, email, Instagram, etc.
 
-public/content/announcements/*.json → announcements that show up on the site.
+### 4. Run the Development Server
 
-public/content/events/*.json → events listed on the events page.
+public/content/announcements/\*.json → announcements that show up on the site.
+
+```bash
+npm run dev
+```
+
+public/content/events/\*.json → events listed on the events page.
 
 API routes in src/app/api/content/ handle reading and updating these files.
 This makes the site lightweight and easy to maintain.
@@ -47,6 +68,7 @@ The site is built for Vercel.
 To deploy:
 
 # Steps to deploy on Vercel
+
 1. Log into https://vercel.com and connect your GitHub account
 2. Import the repo AuraSecure/iscream-react
 3. Use the default settings (Vercel detects Next.js automatically)
@@ -65,4 +87,7 @@ Calendar integration for events.
 Instagram feed integration.
 
 Expanded design and theming.
+
+```
+Open http://localhost:3000 with your browser to see the result. You can start editing the page by modifying `src/app/page.tsx`.
 ```

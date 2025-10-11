@@ -1,34 +1,23 @@
 import { NextResponse } from "next/server";
+import { gh } from "@/lib/github";
 
-const { GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, GITHUB_BRANCH } = process.env;
-
-function checkConfig() {
-  if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO || !GITHUB_BRANCH) {
-    throw new Error("Missing GitHub configuration");
-  }
-}
-
-// ------------------------- GET -------------------------
 export async function GET() {
   try {
-    checkConfig();
-
-    const listRes = await fetch(
-      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/content/events?ref=${GITHUB_BRANCH}`,
-      { headers: { Authorization: `token ${GITHUB_TOKEN}` } }
+    type GithubFile = { name: string; type: string; download_url: string };
+    const files = await gh<GithubFile[]>(
+      `content/events?ref=${process.env.GITHUB_BRANCH || "main"}`
     );
 
-    if (!listRes.ok) {
-      throw new Error(`GitHub API error: ${listRes.status}`);
+    // Guard against non-array responses before iterating
+    if (!Array.isArray(files)) {
+      return NextResponse.json([]);
     }
-
-    const files: any[] = await listRes.json();
 
     const events = await Promise.all(
       files
         .filter((f) => f.type === "file")
         .map(async (file) => {
-          const res = await fetch(file.download_url);
+          const res = await fetch(file.download_url); // download_url is already authenticated
           const data = await res.json();
           return {
             ...data,
@@ -38,127 +27,68 @@ export async function GET() {
     );
 
     return NextResponse.json(events);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 // ------------------------- POST -------------------------
 export async function POST(req: Request) {
   try {
-    checkConfig();
-
     const body = await req.json();
     if (!body || !body.title) {
       return NextResponse.json({ error: "Missing required field: title" }, { status: 400 });
     }
 
-    const now = new Date().toISOString();
+    const now = new Date();
+    const dateStamp = now.toISOString().split("T")[0]; // YYYY-MM-DD
 
     // safer slug
     const safeTitle = body.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
-    const slug = `${safeTitle}-${Date.now()}`;
+    const slug = `${dateStamp}-${safeTitle}`;
     const path = `content/events/${slug}.json`;
 
     // inject timestamps
     const eventData = {
       ...body,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
     };
 
     const content = Buffer.from(JSON.stringify(eventData, null, 2)).toString("base64");
 
-    const res = await fetch(
-      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          Accept: "application/vnd.github.v3+json",
-        },
-        body: JSON.stringify({
-          message: `Add new event: ${body.title}`,
-          content,
-          branch: GITHUB_BRANCH,
-        }),
-      }
-    );
+    // Define the expected response shape from the GitHub API for a file creation
+    type GithubPutResponse = { commit: { sha: string } };
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`GitHub API error: ${res.status} - ${text}`);
-    }
-
-    const result = await res.json();
+    const result = await gh<GithubPutResponse>(path, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: `Add new event: ${body.title}`,
+        content,
+        branch: process.env.GITHUB_BRANCH || "main",
+        committer: { name: "I Scream CMS", email: "noreply@example.com" },
+      }),
+    });
 
     return NextResponse.json({
       success: true,
       slug,
-      commit: result?.commit?.sha || null,
+      // Use optional chaining for safe access
+      commit: result?.commit?.sha ?? null,
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
-// ------------------------- DELETE -------------------------
-export async function DELETE(req: Request) {
-  try {
-    checkConfig();
-
-    const url = new URL(req.url);
-    const slug = url.pathname.split("/").pop();
-    if (!slug) {
-      return NextResponse.json({ error: "Missing slug" }, { status: 400 });
-    }
-
-    const path = `content/events/${slug}.json`;
-
-    // get file sha first
-    const getRes = await fetch(
-      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}?ref=${GITHUB_BRANCH}`,
-      { headers: { Authorization: `token ${GITHUB_TOKEN}` } }
-    );
-
-    if (!getRes.ok) {
-      const text = await getRes.text();
-      throw new Error(`Failed to fetch file for delete: ${getRes.status} - ${text}`);
-    }
-
-    const fileData = await getRes.json();
-
-    const delRes = await fetch(
-      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          Accept: "application/vnd.github.v3+json",
-        },
-        body: JSON.stringify({
-          message: `Delete event: ${slug}`,
-          sha: fileData.sha,
-          branch: GITHUB_BRANCH,
-        }),
-      }
-    );
-
-    if (!delRes.ok) {
-      const text = await delRes.text();
-      throw new Error(`GitHub API error: ${delRes.status} - ${text}`);
-    }
-
-    const result = await delRes.json();
-
-    return NextResponse.json({
-      success: true,
-      commit: result?.commit?.sha || null,
-    });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  }
-}
+// The DELETE functionality is handled by the dynamic route src/app/api/content/events/[slug]/route.ts
+// This file should only handle GET for all events and POST for creating a new event.
+// We can remove the DELETE handler from here to avoid confusion and potential bugs.

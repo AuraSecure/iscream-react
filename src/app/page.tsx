@@ -1,16 +1,5 @@
 import Image from "next/image";
-
-interface GeneralSettings {
-  businessName: string;
-}
-
-async function getGeneralSettings(): Promise<GeneralSettings> {
-  // Use an absolute URL pointing to our running dev server.
-  // The empty `{}` for the second argument tells Next.js to use its default caching.
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/content/general`, {});
-  const data = await res.json();
-  return data.json;
-}
+import { getGeneralSettings } from "@/lib/content";
 
 export default async function HomePage() {
   const settings = await getGeneralSettings();
