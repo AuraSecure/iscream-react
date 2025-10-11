@@ -1,4 +1,4 @@
-# I Scream Ice Cream - Website
+# I Scream Ice Cream - Official Website
 
 This is the Next.js frontend for the I Scream Ice Cream website. It uses a Git-based CMS approach, pulling content from a separate GitHub repository.
 
