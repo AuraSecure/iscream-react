@@ -49,9 +49,9 @@ This makes the site lightweight and easy to maintain.
 
 🛠 Manage page
 
-Go to /manage while running locally and you’ll see the current site settings pulled from JSON.
+Go to /manage while running locally to access the content management hub. This page provides links to dedicated sections for editing different parts of the site's content.
 
-Right now they show up read-only...the next step will be making them editable with Confirm / No Changes logic.
+The "General Settings" and "Events" pages are now functional, allowing for content updates that are saved directly to your repository.
 
 🌐 Deployment
 

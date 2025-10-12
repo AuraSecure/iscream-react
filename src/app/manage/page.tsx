@@ -1,98 +1,35 @@
-"use client";
+import Link from "next/link";
 
-import { useEffect, useState } from "react";
-import type { GeneralSettings } from "@/lib/content";
-import ManageEvents from "./ManageEvents";
+const managementSections = [
+  {
+    name: "General Settings",
+    href: "/manage/general",
+    description: "Business name, address, contact info.",
+  },
+  {
+    name: "Events",
+    href: "/manage/events",
+    description: "Manage recurring and one-time events.",
+  },
+];
 
 export default function ManagePage() {
-  const [data, setData] = useState<GeneralSettings | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    fetch("/api/content/general", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.error) {
-          setMsg(`Failed to load settings: ${data.error}`);
-        } else {
-          setData(data.json);
-        }
-        setLoading(false);
-      })
-      .catch((e) => {
-        console.error(e);
-        setMsg("Failed to load settings.");
-        setLoading(false);
-      });
-  }, []);
-
-  const update = (field: keyof GeneralSettings, value: string) => {
-    if (!data) return;
-    setData({ ...data, [field]: value });
-  };
-
-  const save = async () => {
-    if (!data) return;
-    setSaving(true);
-    setMsg(null);
-    try {
-      const res = await fetch("/api/content/general", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ json: data, message: "Update general.json via /manage" }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      setMsg("✅ Saved to GitHub");
-
-      // Revalidate the paths that use this data
-      await fetch("/api/revalidate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paths: ["/", "/contact", "/events", "/menu"] }), // Revalidate all pages that use general settings
-      });
-    } catch (e) {
-      console.error(e);
-      setMsg("❌ Save failed");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) return <main style={{ padding: 24 }}>Loading…</main>;
-  if (!data) return <main style={{ padding: 24 }}>No data.</main>;
-
   return (
     <main className="p-6 md:p-12 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">Manage Site</h1>
-
-      <section className="bg-gray-100 p-6 rounded-lg shadow-md mb-12">
-        <h2 className="text-2xl font-semibold mb-4">General Settings</h2>
-        {(
-          ["businessName", "address", "email", "instagram", "hours"] as (keyof GeneralSettings)[]
-        ).map((k) => (
-          <div key={k} className="mb-4">
-            <label className="block font-medium text-gray-700 capitalize mb-1">{k}</label>
-            <input
-              value={data[k] || ""}
-              onChange={(e) => update(k, e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md shadow-sm"
-            />
-          </div>
+      <ul className="space-y-4">
+        {managementSections.map((section) => (
+          <li key={section.name}>
+            <Link
+              href={section.href}
+              className="block rounded-lg border bg-white p-4 shadow-sm transition hover:bg-gray-100"
+            >
+              <h2 className="font-semibold text-gray-900">{section.name}</h2>
+              <p className="text-sm text-gray-600">{section.description}</p>
+            </Link>
+          </li>
         ))}
-        <button
-          onClick={save}
-          disabled={saving}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-        >
-          {saving ? "Saving…" : "Save Settings"}
-        </button>
-        {msg && <p className="mt-4 text-sm">{msg}</p>}
-      </section>
-
-      <ManageEvents />
+      </ul>
     </main>
   );
 }
