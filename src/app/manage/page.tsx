@@ -27,9 +27,24 @@ const managementSections = [
     description: "Manage all ice cream flavor categories and items.",
   },
   {
-    name: "Toppings",
+    name: "Ice Cream Toppings",
     href: "/manage/toppings",
     description: "Manage all topping categories and items.",
+  },
+  {
+    name: "Ice Cream Creations",
+    href: "/manage/creations",
+    description: "Sundaes, splits, shakes, and other creations.",
+  },
+  {
+    name: "Drinks and Floats",
+    href: "/manage/drinks",
+    description: "Manage sodas, floats, and other beverages.",
+  },
+  {
+    name: "Food (Hot Dogs, Chips,etc.)",
+    href: "/manage/food",
+    description: "Manage hot dogs, savory treats, and other food items.",
   },
 ];
 

@@ -1,0 +1,117 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+
+interface UseContentManagerOptions<T> {
+  apiPath: string;
+  onLoad?: (data: T) => void;
+  onSave?: (data: T) => void;
+  disabled?: boolean;
+}
+
+export function useContentManager<T>({
+  apiPath,
+  onLoad,
+  onSave,
+  disabled,
+}: UseContentManagerOptions<T>) {
+  const [data, setData] = useState<T | null>(null);
+  const [sha, setSha] = useState<string | null>(null);
+  const [initialData, setInitialData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const hasChanges =
+    data && initialData ? JSON.stringify(data) !== JSON.stringify(initialData) : false;
+
+  const loadData = useCallback(() => {
+    setLoading(true);
+    if (disabled) {
+      setLoading(false);
+      return;
+    }
+    fetch(apiPath, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((fetchedData) => {
+        if (fetchedData.error) {
+          setMsg(`❌ Failed to load content: ${fetchedData.error}`);
+        } else {
+          const jsonData = fetchedData.json;
+          setData(jsonData);
+          setSha(fetchedData.sha);
+          setInitialData(JSON.parse(JSON.stringify(jsonData)));
+          if (onLoad) {
+            onLoad(jsonData);
+          }
+        }
+      })
+      .catch((e) => {
+        console.error(e);
+        setMsg("❌ Failed to load content.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [apiPath, onLoad, disabled]);
+
+  useEffect(() => {
+    if (!disabled) {
+      loadData();
+    }
+  }, [loadData, disabled]);
+
+  const save = async () => {
+    if (!data) return;
+    setSaving(true);
+    setMsg(null);
+    try {
+      const res = await fetch(apiPath, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ json: data, sha }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setMsg("✅ Saved successfully!");
+      setInitialData(JSON.parse(JSON.stringify(data))); // Update initial state to new saved state
+      if (onSave) {
+        onSave(data);
+      }
+    } catch (e) {
+      console.error(e);
+      setMsg(`❌ Save failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDiscard = () => {
+    setData(initialData);
+  };
+
+  // Warn user about unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+        return e.returnValue;
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasChanges]);
+
+  return {
+    data,
+    setData,
+    loading,
+    saving,
+    setSaving,
+    msg,
+    setMsg,
+    hasChanges,
+    save,
+    handleDiscard,
+  };
+}

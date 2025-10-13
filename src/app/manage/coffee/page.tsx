@@ -3,28 +3,29 @@
 import { useEffect, useState, useRef } from "react";
 import { useContentManager } from "@/hooks/useContentManager";
 
-interface Flavor {
+interface CoffeeItem {
   name: string;
+  price?: number;
   description?: string;
 }
 
-interface FlavorCategory {
+interface CoffeeSection {
   name: string;
-  items: Flavor[];
+  items: CoffeeItem[];
 }
 
-interface FlavorsData {
-  categories: FlavorCategory[];
+interface CoffeeData {
+  sections: CoffeeSection[];
 }
 
-export default function ManageFlavorsPage() {
+export default function ManageCoffeePage() {
   const { data, setData, loading, saving, msg, setMsg, hasChanges, save, handleDiscard } =
-    useContentManager<FlavorsData>({
-      apiPath: "/api/content/flavors",
+    useContentManager<CoffeeData>({
+      apiPath: "/api/content/coffee",
     });
 
   const [editingItem, setEditingItem] = useState<{
-    categoryIndex: number;
+    sectionIndex: number;
     itemIndex: number;
   } | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -46,9 +47,7 @@ export default function ManageFlavorsPage() {
       }
     };
     document.addEventListener("click", handleLinkClick, true);
-    return () => {
-      document.removeEventListener("click", handleLinkClick, true);
-    };
+    return () => document.removeEventListener("click", handleLinkClick, true);
   }, [hasChanges]);
 
   useEffect(() => {
@@ -56,69 +55,70 @@ export default function ManageFlavorsPage() {
   }, [editingItem]);
 
   const handleSaveItemEdit = (
-    categoryIndex: number,
+    sectionIndex: number,
     itemIndex: number,
-    newCategoryIndex: number,
+    newSectionIndex: number,
     newName: string,
+    newPrice: number | undefined,
     newDescription: string
   ) => {
     if (!data) return;
     const newData = JSON.parse(JSON.stringify(data));
 
-    if (categoryIndex === newCategoryIndex) {
-      const item = newData.categories[categoryIndex].items[itemIndex];
-      item.name = newName;
-      item.description = newDescription;
+    const updatedItem = {
+      name: newName,
+      price: newPrice,
+      description: newDescription,
+    };
+
+    if (sectionIndex === newSectionIndex) {
+      newData.sections[sectionIndex].items[itemIndex] = updatedItem;
     } else {
-      const [itemToMove] = newData.categories[categoryIndex].items.splice(itemIndex, 1);
-      itemToMove.name = newName;
-      itemToMove.description = newDescription;
-      newData.categories[newCategoryIndex].items.push(itemToMove);
+      newData.sections[sectionIndex].items.splice(itemIndex, 1);
+      newData.sections[newSectionIndex].items.push(updatedItem);
     }
 
     setData(newData);
     setEditingItem(null);
   };
 
-  const handleCancelItemEdit = () => {
-    setEditingItem(null);
-  };
+  const handleCancelItemEdit = () => setEditingItem(null);
 
-  const handleAddItem = (categoryIndex: number) => {
+  const handleAddItem = (sectionIndex: number) => {
     if (!data) return;
     const newData = JSON.parse(JSON.stringify(data));
-    const categoryItems = newData.categories[categoryIndex].items;
-    categoryItems.push({ name: "", description: "" });
+    const sectionItems = newData.sections[sectionIndex].items;
+    sectionItems.push({ name: "", description: "" });
     setData(newData);
-    setEditingItem({ categoryIndex: categoryIndex, itemIndex: categoryItems.length - 1 });
+    setEditingItem({ sectionIndex: sectionIndex, itemIndex: sectionItems.length - 1 });
   };
 
-  const handleRemoveItem = (categoryIndex: number, itemIndex: number) => {
+  const handleRemoveItem = (sectionIndex: number, itemIndex: number) => {
     if (!data) return;
-    if (!confirm("Are you sure you want to delete this flavor?")) return;
+    if (!confirm("Are you sure you want to delete this item?")) return;
     const newData = JSON.parse(JSON.stringify(data));
-    newData.categories[categoryIndex].items.splice(itemIndex, 1);
+    newData.sections[sectionIndex].items.splice(itemIndex, 1);
     setData(newData);
   };
 
-  const handleAddCategory = () => {
+  const handleAddSection = () => {
     if (!data) return;
-    const categoryName = prompt("Enter new category name:");
-    if (categoryName) {
+    const sectionName = prompt("Enter new section name:");
+    if (sectionName) {
       const newData = JSON.parse(JSON.stringify(data));
-      newData.categories.push({ name: categoryName, items: [] });
+      newData.sections.push({ name: sectionName, items: [] });
       setData(newData);
     }
   };
 
-  const handleRemoveCategory = (categoryIndex: number) => {
+  const handleRemoveSection = (sectionIndex: number) => {
     if (!data) return;
-    const category = data.categories[categoryIndex];
-    const flavorsCount = category.items.length;
+    const section = data.sections[sectionIndex];
+    const itemsCount = section.items.length;
 
-    let warningMessage = `Are you sure you want to permanently delete the "${category.name}" category?`;
-    if (flavorsCount > 0) {
-      warningMessage += `\n\nThis will also delete all ${flavorsCount} flavors inside it. This action cannot be undone.`;
+    let warningMessage = `Are you sure you want to permanently delete the "${section.name}" section?`;
+    if (itemsCount > 0) {
+      warningMessage += `\n\nThis will also delete all ${itemsCount} items inside it. This action cannot be undone.`;
     }
 
     if (!window.confirm(warningMessage)) return;
@@ -131,46 +131,46 @@ export default function ManageFlavorsPage() {
     if (finalConfirmation !== confirmationText) return;
 
     const newData = JSON.parse(JSON.stringify(data));
-    newData.categories.splice(categoryIndex, 1);
+    newData.sections.splice(sectionIndex, 1);
     setData(newData);
   };
 
-  const currentlyEditingFlavor = editingItem
-    ? data?.categories[editingItem.categoryIndex].items[editingItem.itemIndex]
+  const currentlyEditingItem = editingItem
+    ? data?.sections[editingItem.sectionIndex].items[editingItem.itemIndex]
     : null;
 
-  if (loading) return <main style={{ padding: 24 }}>Loading flavors…</main>;
-  if (!data) return <main style={{ padding: 24 }}>Could not load flavors data.</main>;
+  if (loading) return <main style={{ padding: 24 }}>Loading coffee menu…</main>;
+  if (!data) return <main style={{ padding: 24 }}>Could not load coffee menu data.</main>;
 
   return (
     <section className="bg-gray-100 p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Manage Flavors</h1>
+        <h1 className="text-3xl font-bold">Manage Coffee Menu</h1>
         <button
           type="button"
-          onClick={handleAddCategory}
+          onClick={handleAddSection}
           className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"
         >
-          Add Category
+          Add Section
         </button>
       </div>
       <div className="space-y-6">
-        {data.categories.map((category, catIndex) => (
-          <div key={category.name} className="p-4 border rounded-md bg-white">
+        {data.sections.map((section, secIndex) => (
+          <div key={section.name} className="p-4 border rounded-md bg-white">
             <div className="flex justify-between items-center border-b pb-2 mb-4">
-              <h3 className="text-xl font-bold">{category.name}</h3>
+              <h3 className="text-xl font-bold">{section.name}</h3>
               <button
                 type="button"
-                onClick={() => handleRemoveCategory(catIndex)}
+                onClick={() => handleRemoveSection(secIndex)}
                 className="text-sm text-red-500 hover:text-red-700"
               >
-                Delete Category
+                Delete Section
               </button>
             </div>
             <div className="space-y-4">
-              {category.items.map((item, itemIndex) => (
+              {section.items.map((item, itemIndex) => (
                 <div
-                  key={`${catIndex}-${itemIndex}`}
+                  key={`${secIndex}-${itemIndex}`}
                   className="flex justify-between items-center p-2 border-b last:border-b-0"
                 >
                   <div>
@@ -179,19 +179,22 @@ export default function ManageFlavorsPage() {
                       <p className="text-sm text-gray-500">{item.description}</p>
                     )}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-4">
+                    {item.price !== undefined && (
+                      <span className="text-sm font-mono bg-gray-200 px-2 py-1 rounded">
+                        ${item.price.toFixed(2)}
+                      </span>
+                    )}
                     <button
                       type="button"
-                      onClick={() =>
-                        setEditingItem({ categoryIndex: catIndex, itemIndex: itemIndex })
-                      }
+                      onClick={() => setEditingItem({ sectionIndex: secIndex, itemIndex })}
                       className="px-3 py-1 bg-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-300"
                     >
                       Edit
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleRemoveItem(catIndex, itemIndex)}
+                      onClick={() => handleRemoveItem(secIndex, itemIndex)}
                       className="px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-md hover:bg-red-600"
                     >
                       Delete
@@ -203,10 +206,10 @@ export default function ManageFlavorsPage() {
             <div className="mt-4">
               <button
                 type="button"
-                onClick={() => handleAddItem(catIndex)}
+                onClick={() => handleAddItem(secIndex)}
                 className="px-3 py-1 bg-blue-500 text-white text-sm font-semibold rounded-md hover:bg-blue-600"
               >
-                + Add Flavor
+                + Add Item
               </button>
             </div>
           </div>
@@ -215,10 +218,10 @@ export default function ManageFlavorsPage() {
       <div className="mt-8 flex justify-between items-center gap-4">
         <button
           type="button"
-          onClick={handleAddCategory}
+          onClick={handleAddSection}
           className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"
         >
-          + Add Category
+          + Add Section
         </button>
         <div className="flex justify-end gap-4">
           <button
@@ -241,42 +244,58 @@ export default function ManageFlavorsPage() {
       </div>
       {msg && <p className="mt-4 text-sm">{msg}</p>}
 
-      {editingItem && currentlyEditingFlavor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+      {editingItem && currentlyEditingItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4">Edit Flavor</h2>
+            <h2 className="text-2xl font-bold mb-4">Edit Item</h2>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 const form = e.currentTarget;
                 const newName = (form.elements.namedItem("name") as HTMLInputElement).value;
-                const newCategoryIndex = parseInt(
-                  (form.elements.namedItem("category") as HTMLSelectElement).value,
+                const newPriceRaw = (form.elements.namedItem("price") as HTMLInputElement).value;
+                const newPrice = newPriceRaw ? parseFloat(newPriceRaw) : undefined;
+                const newSectionIndex = parseInt(
+                  (form.elements.namedItem("section") as HTMLSelectElement).value,
                   10
                 );
                 const newDescription = (form.elements.namedItem("description") as HTMLInputElement)
                   .value;
                 handleSaveItemEdit(
-                  editingItem.categoryIndex,
+                  editingItem.sectionIndex,
                   editingItem.itemIndex,
-                  newCategoryIndex,
+                  newSectionIndex,
                   newName,
+                  newPrice,
                   newDescription
                 );
               }}
             >
               <div className="mb-4">
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Flavor Name
+                  Item Name
                 </label>
                 <input
                   type="text"
                   id="name"
                   name="name"
                   ref={nameInputRef}
-                  defaultValue={currentlyEditingFlavor.name}
+                  defaultValue={currentlyEditingItem.name}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   required
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+                  Price (Optional)
+                </label>
+                <input
+                  type="number"
+                  id="price"
+                  name="price"
+                  step="0.01"
+                  defaultValue={currentlyEditingItem.price}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div className="mb-4">
@@ -287,23 +306,23 @@ export default function ManageFlavorsPage() {
                   type="text"
                   id="description"
                   name="description"
-                  defaultValue={currentlyEditingFlavor.description || ""}
+                  defaultValue={currentlyEditingItem.description || ""}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div className="mb-6">
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                  Category
+                <label htmlFor="section" className="block text-sm font-medium text-gray-700">
+                  Section
                 </label>
                 <select
-                  id="category"
-                  name="category"
-                  defaultValue={editingItem.categoryIndex}
+                  id="section"
+                  name="section"
+                  defaultValue={editingItem.sectionIndex}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 >
-                  {data.categories.map((cat, index) => (
+                  {data.sections.map((sec, index) => (
                     <option key={index} value={index}>
-                      {cat.name}
+                      {sec.name}
                     </option>
                   ))}
                 </select>

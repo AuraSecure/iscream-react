@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useContentManager } from "@/hooks/useContentManager";
 
 interface Topping {
   name: string;
@@ -17,61 +18,21 @@ interface ToppingsData {
 }
 
 export default function ManageToppingsPage() {
-  const [data, setData] = useState<ToppingsData | null>(null);
-  const [sha, setSha] = useState<string | null>(null);
-  const [initialData, setInitialData] = useState<ToppingsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const { data, setData, loading, saving, msg, setMsg, hasChanges, save, handleDiscard } =
+    useContentManager<ToppingsData>({
+      apiPath: "/api/content/toppings",
+    });
+
   const [editingItem, setEditingItem] = useState<{
     categoryIndex: number;
     itemIndex: number;
   } | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    fetch("/api/content/toppings", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.error) {
-          setMsg(`Failed to load toppings: ${data.error}`);
-        } else {
-          const jsonData = data.json;
-          setData(jsonData);
-          setSha(data.sha);
-          // Create a deep copy for initial state to allow for discarding changes
-          setInitialData(JSON.parse(JSON.stringify(jsonData)));
-        }
-        setLoading(false);
-      });
-  }, []);
-
-  const hasChanges = JSON.stringify(data) !== JSON.stringify(initialData);
-
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasChanges) {
-        e.preventDefault();
-        // Most browsers show a generic message and ignore this one.
-        e.returnValue =
-          "You have unsaved changes. To save them, please cancel and click the 'Save Changes' button.";
-        return e.returnValue;
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [hasChanges]);
 
   useEffect(() => {
     const handleLinkClick = (e: MouseEvent) => {
       if (hasChanges) {
         const target = e.target as HTMLElement;
-        // Check if the click is on a link or inside a link
         if (target.closest("a")) {
           if (
             !window.confirm(
@@ -84,7 +45,7 @@ export default function ManageToppingsPage() {
         }
       }
     };
-    document.addEventListener("click", handleLinkClick, true); // Use capture phase
+    document.addEventListener("click", handleLinkClick, true);
     return () => {
       document.removeEventListener("click", handleLinkClick, true);
     };
@@ -177,33 +138,6 @@ export default function ManageToppingsPage() {
     const newData = JSON.parse(JSON.stringify(data)); // Deep copy
     newData.categories.splice(categoryIndex, 1);
     setData(newData);
-  };
-
-  const save = async () => {
-    if (!data) return;
-    setSaving(true);
-    setMsg(null);
-    try {
-      const res = await fetch("/api/content/toppings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ json: data, sha }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      setMsg("✅ Saved to GitHub");
-      // Update initialData to the new saved state
-      setInitialData(JSON.parse(JSON.stringify(data)));
-      // We would refetch the sha here in a real app, but for now this is fine
-    } catch (e) {
-      console.error(e);
-      setMsg("❌ Save failed");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDiscard = () => {
-    setData(initialData);
   };
 
   const currentlyEditingTopping = editingItem

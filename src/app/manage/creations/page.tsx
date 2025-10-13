@@ -3,24 +3,29 @@
 import { useEffect, useState, useRef } from "react";
 import { useContentManager } from "@/hooks/useContentManager";
 
-interface Flavor {
+interface CreationItem {
+  name: string;
+  price?: number;
+  description?: string;
+  flavorsAllowed?: number;
+  freeToppings?: number;
+  notes?: string;
+}
+
+interface CreationCategory {
   name: string;
   description?: string;
+  items: CreationItem[];
 }
 
-interface FlavorCategory {
-  name: string;
-  items: Flavor[];
+interface CreationsData {
+  categories: CreationCategory[];
 }
 
-interface FlavorsData {
-  categories: FlavorCategory[];
-}
-
-export default function ManageFlavorsPage() {
+export default function ManageCreationsPage() {
   const { data, setData, loading, saving, msg, setMsg, hasChanges, save, handleDiscard } =
-    useContentManager<FlavorsData>({
-      apiPath: "/api/content/flavors",
+    useContentManager<CreationsData>({
+      apiPath: "/api/content/creations",
     });
 
   const [editingItem, setEditingItem] = useState<{
@@ -46,9 +51,7 @@ export default function ManageFlavorsPage() {
       }
     };
     document.addEventListener("click", handleLinkClick, true);
-    return () => {
-      document.removeEventListener("click", handleLinkClick, true);
-    };
+    return () => document.removeEventListener("click", handleLinkClick, true);
   }, [hasChanges]);
 
   useEffect(() => {
@@ -59,43 +62,44 @@ export default function ManageFlavorsPage() {
     categoryIndex: number,
     itemIndex: number,
     newCategoryIndex: number,
-    newName: string,
-    newDescription: string
+    newItemData: CreationItem
   ) => {
     if (!data) return;
     const newData = JSON.parse(JSON.stringify(data));
 
+    // Clean up empty optional fields
+    Object.keys(newItemData).forEach((key) => {
+      const typedKey = key as keyof CreationItem;
+      if (newItemData[typedKey] === "" || newItemData[typedKey] === null) {
+        delete newItemData[typedKey];
+      }
+    });
+
     if (categoryIndex === newCategoryIndex) {
-      const item = newData.categories[categoryIndex].items[itemIndex];
-      item.name = newName;
-      item.description = newDescription;
+      newData.categories[categoryIndex].items[itemIndex] = newItemData;
     } else {
-      const [itemToMove] = newData.categories[categoryIndex].items.splice(itemIndex, 1);
-      itemToMove.name = newName;
-      itemToMove.description = newDescription;
-      newData.categories[newCategoryIndex].items.push(itemToMove);
+      newData.categories[categoryIndex].items.splice(itemIndex, 1);
+      newData.categories[newCategoryIndex].items.push(newItemData);
     }
 
     setData(newData);
     setEditingItem(null);
   };
 
-  const handleCancelItemEdit = () => {
-    setEditingItem(null);
-  };
+  const handleCancelItemEdit = () => setEditingItem(null);
 
   const handleAddItem = (categoryIndex: number) => {
     if (!data) return;
     const newData = JSON.parse(JSON.stringify(data));
     const categoryItems = newData.categories[categoryIndex].items;
-    categoryItems.push({ name: "", description: "" });
+    categoryItems.push({ name: "" });
     setData(newData);
     setEditingItem({ categoryIndex: categoryIndex, itemIndex: categoryItems.length - 1 });
   };
 
   const handleRemoveItem = (categoryIndex: number, itemIndex: number) => {
     if (!data) return;
-    if (!confirm("Are you sure you want to delete this flavor?")) return;
+    if (!confirm("Are you sure you want to delete this item?")) return;
     const newData = JSON.parse(JSON.stringify(data));
     newData.categories[categoryIndex].items.splice(itemIndex, 1);
     setData(newData);
@@ -114,11 +118,11 @@ export default function ManageFlavorsPage() {
   const handleRemoveCategory = (categoryIndex: number) => {
     if (!data) return;
     const category = data.categories[categoryIndex];
-    const flavorsCount = category.items.length;
+    const itemsCount = category.items.length;
 
     let warningMessage = `Are you sure you want to permanently delete the "${category.name}" category?`;
-    if (flavorsCount > 0) {
-      warningMessage += `\n\nThis will also delete all ${flavorsCount} flavors inside it. This action cannot be undone.`;
+    if (itemsCount > 0) {
+      warningMessage += `\n\nThis will also delete all ${itemsCount} items inside it. This action cannot be undone.`;
     }
 
     if (!window.confirm(warningMessage)) return;
@@ -135,17 +139,17 @@ export default function ManageFlavorsPage() {
     setData(newData);
   };
 
-  const currentlyEditingFlavor = editingItem
+  const currentlyEditingItem = editingItem
     ? data?.categories[editingItem.categoryIndex].items[editingItem.itemIndex]
     : null;
 
-  if (loading) return <main style={{ padding: 24 }}>Loading flavors…</main>;
-  if (!data) return <main style={{ padding: 24 }}>Could not load flavors data.</main>;
+  if (loading) return <main style={{ padding: 24 }}>Loading creations menu…</main>;
+  if (!data) return <main style={{ padding: 24 }}>Could not load creations menu data.</main>;
 
   return (
     <section className="bg-gray-100 p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Manage Flavors</h1>
+        <h1 className="text-3xl font-bold">Manage Creations Menu</h1>
         <button
           type="button"
           onClick={handleAddCategory}
@@ -158,11 +162,16 @@ export default function ManageFlavorsPage() {
         {data.categories.map((category, catIndex) => (
           <div key={category.name} className="p-4 border rounded-md bg-white">
             <div className="flex justify-between items-center border-b pb-2 mb-4">
-              <h3 className="text-xl font-bold">{category.name}</h3>
+              <div>
+                <h3 className="text-xl font-bold">{category.name}</h3>
+                {category.description && (
+                  <p className="text-sm text-gray-500 mt-1">{category.description}</p>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => handleRemoveCategory(catIndex)}
-                className="text-sm text-red-500 hover:text-red-700"
+                className="text-sm text-red-500 hover:text-red-700 flex-shrink-0 ml-4"
               >
                 Delete Category
               </button>
@@ -178,13 +187,19 @@ export default function ManageFlavorsPage() {
                     {item.description && (
                       <p className="text-sm text-gray-500">{item.description}</p>
                     )}
+                    {item.notes && (
+                      <p className="text-xs text-gray-400 italic mt-1">{item.notes}</p>
+                    )}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-4">
+                    {item.price !== undefined && (
+                      <span className="text-sm font-mono bg-gray-200 px-2 py-1 rounded">
+                        ${item.price.toFixed(2)}
+                      </span>
+                    )}
                     <button
                       type="button"
-                      onClick={() =>
-                        setEditingItem({ categoryIndex: catIndex, itemIndex: itemIndex })
-                      }
+                      onClick={() => setEditingItem({ categoryIndex: catIndex, itemIndex })}
                       className="px-3 py-1 bg-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-300"
                     >
                       Edit
@@ -206,7 +221,7 @@ export default function ManageFlavorsPage() {
                 onClick={() => handleAddItem(catIndex)}
                 className="px-3 py-1 bg-blue-500 text-white text-sm font-semibold rounded-md hover:bg-blue-600"
               >
-                + Add Flavor
+                + Add Item
               </button>
             </div>
           </div>
@@ -241,74 +256,148 @@ export default function ManageFlavorsPage() {
       </div>
       {msg && <p className="mt-4 text-sm">{msg}</p>}
 
-      {editingItem && currentlyEditingFlavor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+      {editingItem && currentlyEditingItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4">Edit Flavor</h2>
+            <h2 className="text-2xl font-bold mb-4">Edit Creation</h2>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 const form = e.currentTarget;
                 const newName = (form.elements.namedItem("name") as HTMLInputElement).value;
+                const newPriceRaw = (form.elements.namedItem("price") as HTMLInputElement).value;
+                const newFlavorsRaw = (
+                  form.elements.namedItem("flavorsAllowed") as HTMLInputElement
+                ).value;
+                const newToppingsRaw = (form.elements.namedItem("freeToppings") as HTMLInputElement)
+                  .value;
+
+                const newItemData: CreationItem = {
+                  name: newName,
+                  price: newPriceRaw ? parseFloat(newPriceRaw) : undefined,
+                  description: (form.elements.namedItem("description") as HTMLInputElement).value,
+                  notes: (form.elements.namedItem("notes") as HTMLInputElement).value,
+                  flavorsAllowed: newFlavorsRaw ? parseInt(newFlavorsRaw, 10) : undefined,
+                  freeToppings: newToppingsRaw ? parseInt(newToppingsRaw, 10) : undefined,
+                };
+
                 const newCategoryIndex = parseInt(
                   (form.elements.namedItem("category") as HTMLSelectElement).value,
                   10
                 );
-                const newDescription = (form.elements.namedItem("description") as HTMLInputElement)
-                  .value;
                 handleSaveItemEdit(
                   editingItem.categoryIndex,
                   editingItem.itemIndex,
                   newCategoryIndex,
-                  newName,
-                  newDescription
+                  newItemData
                 );
               }}
             >
-              <div className="mb-4">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Flavor Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  ref={nameInputRef}
-                  defaultValue={currentlyEditingFlavor.name}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                    Item Name
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    ref={nameInputRef}
+                    defaultValue={currentlyEditingItem.name}
+                    className="mt-1 block w-full input"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+                    Price
+                  </label>
+                  <input
+                    type="number"
+                    id="price"
+                    name="price"
+                    step="0.01"
+                    defaultValue={currentlyEditingItem.price}
+                    className="mt-1 block w-full input"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                    Description
+                  </label>
+                  <input
+                    type="text"
+                    id="description"
+                    name="description"
+                    defaultValue={currentlyEditingItem.description || ""}
+                    className="mt-1 block w-full input"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
+                    Notes
+                  </label>
+                  <input
+                    type="text"
+                    id="notes"
+                    name="notes"
+                    defaultValue={currentlyEditingItem.notes || ""}
+                    className="mt-1 block w-full input"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="flavorsAllowed"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Flavors Allowed
+                    </label>
+                    <input
+                      type="number"
+                      id="flavorsAllowed"
+                      name="flavorsAllowed"
+                      step="1"
+                      defaultValue={currentlyEditingItem.flavorsAllowed}
+                      className="mt-1 block w-full input"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="freeToppings"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Free Toppings
+                    </label>
+                    <input
+                      type="number"
+                      id="freeToppings"
+                      name="freeToppings"
+                      step="1"
+                      defaultValue={currentlyEditingItem.freeToppings}
+                      className="mt-1 block w-full input"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                    Category
+                  </label>
+                  <select
+                    id="category"
+                    name="category"
+                    defaultValue={editingItem.categoryIndex}
+                    className="mt-1 block w-full input"
+                  >
+                    {data.categories.map((cat, index) => (
+                      <option key={index} value={index}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div className="mb-4">
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                  Description (Optional)
-                </label>
-                <input
-                  type="text"
-                  id="description"
-                  name="description"
-                  defaultValue={currentlyEditingFlavor.description || ""}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div className="mb-6">
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                  Category
-                </label>
-                <select
-                  id="category"
-                  name="category"
-                  defaultValue={editingItem.categoryIndex}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {data.categories.map((cat, index) => (
-                    <option key={index} value={index}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex justify-end gap-4">
+              <div className="mt-6 flex justify-end gap-4">
                 <button
                   type="button"
                   onClick={handleCancelItemEdit}
