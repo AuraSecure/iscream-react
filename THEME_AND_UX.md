@@ -112,7 +112,7 @@ This logic would apply to `toppings.json` and `flavors.json`.
 
 ### 6.4. Coffee Menu (Object-based list content)
 
-The `coffee.json` file contains items that are objects with properties like `name`, `price`, and an optional `description`.
+The `coffee.json` and `food.json` files are structured into `sections`, where each section has a name and a list of items. Items can have a `name`, `price`, and an optional `description`.
 
 - **Editing an Item**:
   - **Decision**: When a user edits a coffee item, all its fields (`name`, `price`, `description`) will become editable within a single form.

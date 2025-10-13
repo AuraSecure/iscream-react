@@ -9,15 +9,17 @@ export default function ManageLayout({ children }: { children: ReactNode }) {
   const isSubPage = pathname !== "/manage";
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      {isSubPage && (
-        <div className="mb-6">
-          <Link href="/manage" className="text-sm text-blue-600 hover:underline">
-            &larr; Back to Content Management
-          </Link>
+    <>
+      <header className="sticky top-16 z-40 bg-gray-50/90 backdrop-blur-sm border-b">
+        <div className="p-4 max-w-screen-xl mx-auto">
+          {isSubPage && (
+            <Link href="/manage" className="text-sm text-blue-600 hover:underline">
+              &larr; Back to Content Management
+            </Link>
+          )}
         </div>
-      )}
-      {children}
-    </div>
+      </header>
+      <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+    </>
   );
 }

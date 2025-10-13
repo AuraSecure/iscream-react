@@ -11,6 +11,26 @@ const managementSections = [
     href: "/manage/events",
     description: "Manage recurring and one-time events.",
   },
+  {
+    name: "Announcements",
+    href: "/manage/announcements",
+    description: "Site-wide banners and pop-ups.",
+  },
+  {
+    name: "Coffee Menu",
+    href: "/manage/coffee",
+    description: "Edit coffee, espresso, and other drinks.",
+  },
+  {
+    name: "Ice Cream Flavors",
+    href: "/manage/flavors",
+    description: "Manage all ice cream flavor categories and items.",
+  },
+  {
+    name: "Toppings",
+    href: "/manage/toppings",
+    description: "Manage all topping categories and items.",
+  },
 ];
 
 export default function ManagePage() {

@@ -17,6 +17,7 @@ All menu-related content is stored in the `/content/menu/` directory.
  ├── coffee.json
  ├── flavors.json
  └── toppings.json
+ └── food.json
 ```
 
 ### ✅ **1. Decap CMS Integration**

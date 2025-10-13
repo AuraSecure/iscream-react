@@ -19,8 +19,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-hot-pink text-dark-magenta`}>
-        <nav className="bg-deep-magenta p-4 flex justify-between items-center shadow-lg">
+      <body className={`${inter.className} bg-cream text-dark-magenta`}>
+        <nav className="sticky top-0 z-50 bg-deep-magenta p-4 flex justify-between items-center shadow-lg h-16">
           <div>
             <Link
               href="/"
@@ -50,7 +50,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </Link>
           </div>
         </nav>
-        {children}
+        <div className="bg-hot-pink">{children}</div>
       </body>
     </html>
   );
