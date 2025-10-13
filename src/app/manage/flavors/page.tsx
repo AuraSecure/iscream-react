@@ -2,24 +2,24 @@
 
 import { useEffect, useState, useRef } from "react";
 
-interface Topping {
+interface Flavor {
   name: string;
   description?: string;
 }
 
-interface ToppingCategory {
+interface FlavorCategory {
   name: string;
-  items: Topping[];
+  items: Flavor[];
 }
 
-interface ToppingsData {
-  categories: ToppingCategory[];
+interface FlavorsData {
+  categories: FlavorCategory[];
 }
 
-export default function ManageToppingsPage() {
-  const [data, setData] = useState<ToppingsData | null>(null);
+export default function ManageFlavorsPage() {
+  const [data, setData] = useState<FlavorsData | null>(null);
   const [sha, setSha] = useState<string | null>(null);
-  const [initialData, setInitialData] = useState<ToppingsData | null>(null);
+  const [initialData, setInitialData] = useState<FlavorsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingItem, setEditingItem] = useState<{
@@ -31,16 +31,15 @@ export default function ManageToppingsPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch("/api/content/toppings", { cache: "no-store" })
+    fetch("/api/content/flavors", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         if (data.error) {
-          setMsg(`Failed to load toppings: ${data.error}`);
+          setMsg(`Failed to load flavors: ${data.error}`);
         } else {
           const jsonData = data.json;
           setData(jsonData);
           setSha(data.sha);
-          // Create a deep copy for initial state to allow for discarding changes
           setInitialData(JSON.parse(JSON.stringify(jsonData)));
         }
         setLoading(false);
@@ -53,7 +52,6 @@ export default function ManageToppingsPage() {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasChanges) {
         e.preventDefault();
-        // Most browsers show a generic message and ignore this one.
         e.returnValue =
           "You have unsaved changes. To save them, please cancel and click the 'Save Changes' button.";
         return e.returnValue;
@@ -71,7 +69,6 @@ export default function ManageToppingsPage() {
     const handleLinkClick = (e: MouseEvent) => {
       if (hasChanges) {
         const target = e.target as HTMLElement;
-        // Check if the click is on a link or inside a link
         if (target.closest("a")) {
           if (
             !window.confirm(
@@ -84,7 +81,7 @@ export default function ManageToppingsPage() {
         }
       }
     };
-    document.addEventListener("click", handleLinkClick, true); // Use capture phase
+    document.addEventListener("click", handleLinkClick, true);
     return () => {
       document.removeEventListener("click", handleLinkClick, true);
     };
@@ -102,23 +99,21 @@ export default function ManageToppingsPage() {
     newDescription: string
   ) => {
     if (!data) return;
-    const newData = JSON.parse(JSON.stringify(data)); // Deep copy
+    const newData = JSON.parse(JSON.stringify(data));
 
     if (categoryIndex === newCategoryIndex) {
-      // Item stays in the same category, just update its properties
       const item = newData.categories[categoryIndex].items[itemIndex];
       item.name = newName;
       item.description = newDescription;
     } else {
-      // Item is moving to a new category
       const [itemToMove] = newData.categories[categoryIndex].items.splice(itemIndex, 1);
       itemToMove.name = newName;
       itemToMove.description = newDescription;
       newData.categories[newCategoryIndex].items.push(itemToMove);
     }
 
-    setData(newData); // Update the state with the modified data
-    setEditingItem(null); // Close the modal
+    setData(newData);
+    setEditingItem(null);
   };
 
   const handleCancelItemEdit = () => {
@@ -127,18 +122,17 @@ export default function ManageToppingsPage() {
 
   const handleAddItem = (categoryIndex: number) => {
     if (!data) return;
-    const newData = JSON.parse(JSON.stringify(data)); // Deep copy
+    const newData = JSON.parse(JSON.stringify(data));
     const categoryItems = newData.categories[categoryIndex].items;
     categoryItems.push({ name: "", description: "" });
     setData(newData);
-    // Immediately open the edit modal for the new item
     setEditingItem({ categoryIndex: categoryIndex, itemIndex: categoryItems.length - 1 });
   };
 
   const handleRemoveItem = (categoryIndex: number, itemIndex: number) => {
     if (!data) return;
-    if (!confirm("Are you sure you want to delete this topping?")) return;
-    const newData = JSON.parse(JSON.stringify(data)); // Deep copy
+    if (!confirm("Are you sure you want to delete this flavor?")) return;
+    const newData = JSON.parse(JSON.stringify(data));
     newData.categories[categoryIndex].items.splice(itemIndex, 1);
     setData(newData);
   };
@@ -147,7 +141,7 @@ export default function ManageToppingsPage() {
     if (!data) return;
     const categoryName = prompt("Enter new category name:");
     if (categoryName) {
-      const newData = JSON.parse(JSON.stringify(data)); // Deep copy
+      const newData = JSON.parse(JSON.stringify(data));
       newData.categories.push({ name: categoryName, items: [] });
       setData(newData);
     }
@@ -156,17 +150,15 @@ export default function ManageToppingsPage() {
   const handleRemoveCategory = (categoryIndex: number) => {
     if (!data) return;
     const category = data.categories[categoryIndex];
-    const toppingsCount = category.items.length;
+    const flavorsCount = category.items.length;
 
     let warningMessage = `Are you sure you want to permanently delete the "${category.name}" category?`;
-    if (toppingsCount > 0) {
-      warningMessage += `\n\nThis will also delete all ${toppingsCount} toppings inside it. This action cannot be undone.`;
+    if (flavorsCount > 0) {
+      warningMessage += `\n\nThis will also delete all ${flavorsCount} flavors inside it. This action cannot be undone.`;
     }
 
-    // First confirmation
     if (!window.confirm(warningMessage)) return;
 
-    // Second, more deliberate confirmation
     const confirmationText = "DELETE";
     const finalConfirmation = prompt(
       `This action is permanent. To confirm, please type "${confirmationText}" below:`
@@ -174,7 +166,7 @@ export default function ManageToppingsPage() {
 
     if (finalConfirmation !== confirmationText) return;
 
-    const newData = JSON.parse(JSON.stringify(data)); // Deep copy
+    const newData = JSON.parse(JSON.stringify(data));
     newData.categories.splice(categoryIndex, 1);
     setData(newData);
   };
@@ -184,16 +176,14 @@ export default function ManageToppingsPage() {
     setSaving(true);
     setMsg(null);
     try {
-      const res = await fetch("/api/content/toppings", {
+      const res = await fetch("/api/content/flavors", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ json: data, sha }),
       });
       if (!res.ok) throw new Error(await res.text());
       setMsg("✅ Saved to GitHub");
-      // Update initialData to the new saved state
       setInitialData(JSON.parse(JSON.stringify(data)));
-      // We would refetch the sha here in a real app, but for now this is fine
     } catch (e) {
       console.error(e);
       setMsg("❌ Save failed");
@@ -206,17 +196,17 @@ export default function ManageToppingsPage() {
     setData(initialData);
   };
 
-  const currentlyEditingTopping = editingItem
+  const currentlyEditingFlavor = editingItem
     ? data?.categories[editingItem.categoryIndex].items[editingItem.itemIndex]
     : null;
 
-  if (loading) return <main style={{ padding: 24 }}>Loading toppings…</main>;
-  if (!data) return <main style={{ padding: 24 }}>Could not load toppings data.</main>;
+  if (loading) return <main style={{ padding: 24 }}>Loading flavors…</main>;
+  if (!data) return <main style={{ padding: 24 }}>Could not load flavors data.</main>;
 
   return (
     <section className="bg-gray-100 p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Manage Toppings</h1>
+        <h1 className="text-3xl font-bold">Manage Flavors</h1>
         <button
           type="button"
           onClick={handleAddCategory}
@@ -277,7 +267,7 @@ export default function ManageToppingsPage() {
                 onClick={() => handleAddItem(catIndex)}
                 className="px-3 py-1 bg-blue-500 text-white text-sm font-semibold rounded-md hover:bg-blue-600"
               >
-                + Add Topping
+                + Add Flavor
               </button>
             </div>
           </div>
@@ -312,11 +302,10 @@ export default function ManageToppingsPage() {
       </div>
       {msg && <p className="mt-4 text-sm">{msg}</p>}
 
-      {/* Edit Modal */}
-      {editingItem && currentlyEditingTopping && (
+      {editingItem && currentlyEditingFlavor && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4">Edit Topping</h2>
+            <h2 className="text-2xl font-bold mb-4">Edit Flavor</h2>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -339,14 +328,14 @@ export default function ManageToppingsPage() {
             >
               <div className="mb-4">
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Topping Name
+                  Flavor Name
                 </label>
                 <input
                   type="text"
                   id="name"
                   name="name"
                   ref={nameInputRef}
-                  defaultValue={currentlyEditingTopping.name}
+                  defaultValue={currentlyEditingFlavor.name}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
@@ -359,7 +348,7 @@ export default function ManageToppingsPage() {
                   type="text"
                   id="description"
                   name="description"
-                  defaultValue={currentlyEditingTopping.description || ""}
+                  defaultValue={currentlyEditingFlavor.description || ""}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
