@@ -1,25 +1,12 @@
 # I Scream Ice Cream - Official Website V.a
 
-This is the Next.js frontend for the I Scream Ice Cream website. It uses a Git-based CMS approach, pulling content from a separate GitHub repository.
+This is the Next.js frontend for the I Scream Ice Cream website. It uses a "Git-based CMS" approach where content is stored as JSON files within the repository and managed via a custom admin interface.
 
 ## 🚀 Getting Started
 
 Follow these steps to get the development environment running.
 
-### 1. Clone the Repository
-
-ANYWHERE IN THIS FILE '''bash just meeans open the command prompt CMD in window and enter commands there. You must be in the project folder
-
-```bash
-git clone <your-repository-url>
-cd iscream-react
-```
-
-Open
-
-### 2. Install Dependencies
-
-http://localhost:3000
+### 1. Install Dependencies
 
 ```bash
 npm install

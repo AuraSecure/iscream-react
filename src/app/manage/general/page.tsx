@@ -1,67 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useContentManager } from "@/hooks/useContentManager";
 import type { GeneralSettings } from "@/lib/content";
 
 export default function ManageGeneralPage() {
-  const [data, setData] = useState<GeneralSettings | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    fetch("/api/content/general", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.error) {
-          setMsg(`Failed to load settings: ${data.error}`);
-        } else {
-          setData(data.json);
-        }
-        setLoading(false);
-      })
-      .catch((e) => {
-        console.error(e);
-        setMsg("Failed to load settings.");
-        setLoading(false);
-      });
-  }, []);
+  const { data, setData, loading, saving, msg, hasChanges, save, handleDiscard } =
+    useContentManager<GeneralSettings>({
+      apiPath: "/api/content/general",
+      onSave: async () => {
+        // Revalidate the paths that use this data
+        await fetch("/api/revalidate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paths: ["/", "/contact", "/events", "/menu"] }),
+        });
+      },
+    });
 
   const update = (field: keyof GeneralSettings, value: string) => {
     if (!data) return;
     setData({ ...data, [field]: value });
   };
 
-  const save = async () => {
-    if (!data) return;
-    setSaving(true);
-    setMsg(null);
-    try {
-      const res = await fetch("/api/content/general", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ json: data, message: "Update general.json via /manage" }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      setMsg("✅ Saved to GitHub");
-
-      // Revalidate the paths that use this data
-      await fetch("/api/revalidate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paths: ["/", "/contact", "/events", "/menu"] }),
-      });
-    } catch (e) {
-      console.error(e);
-      setMsg("❌ Save failed");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) return <main style={{ padding: 24 }}>Loading…</main>;
-  if (!data) return <main style={{ padding: 24 }}>No data.</main>;
+  if (loading) return <main style={{ padding: 24 }}>Loading settings...</main>;
+  if (!data) return <main style={{ padding: 24 }}>Could not load settings data.</main>;
 
   return (
     <section className="bg-gray-100 p-6 rounded-lg shadow-md">
@@ -78,13 +40,23 @@ export default function ManageGeneralPage() {
           />
         </div>
       ))}
-      <button
-        onClick={save}
-        disabled={saving}
-        className="mt-4 px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-      >
-        {saving ? "Saving…" : "Save Settings"}
-      </button>
+      <div className="mt-8 flex justify-end gap-4">
+        <button
+          type="button"
+          onClick={handleDiscard}
+          disabled={!hasChanges || saving}
+          className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+        >
+          Discard Changes
+        </button>
+        <button
+          onClick={save}
+          disabled={!hasChanges || saving}
+          className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+        >
+          {saving ? "Saving…" : "Save Settings"}
+        </button>
+      </div>
       {msg && <p className="mt-4 text-sm">{msg}</p>}
     </section>
   );

@@ -2,21 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useContentManager } from "@/hooks/useContentManager";
+import { EventRecurrenceForm } from "@/components/manage/EventRecurrenceForm";
 import { useParams, useRouter } from "next/navigation";
+import type { Event } from "@/lib/content";
 
-interface Recurrence {
-  frequency?: "WEEKLY" | "MONTHLY" | "YEARLY";
-  interval?: number;
-  byday?: string[];
-}
-
-interface EventData {
-  title: string;
-  startDate: string;
-  description: string;
-  image?: string;
-  recurrence?: Recurrence;
-}
+// The data structure for a single event, matching our content model.
+// Note: The `useContentManager` hook is generic, so we use `Event` here.
+// The `date` property from the `Event` interface is used as `startDate`.
+type EventData = Omit<Event, "slug" | "date"> & { startDate: string };
 
 export default function EditEventPage() {
   const router = useRouter();
@@ -53,21 +46,12 @@ export default function EditEventPage() {
   // For a new event, we manually control the saving state.
   const saving = isSavingExisting;
 
-  const handleInputChange = (field: keyof EventData, value: string | Recurrence | undefined) => {
-    if (!data) return;
-    setData({ ...data, [field]: value });
-  };
-
-  const handleRecurrenceChange = (
-    field: keyof Recurrence,
-    value: string | number | string[] | undefined
+  const handleInputChange = (
+    field: keyof EventData,
+    value: string | Event["repeat"] | undefined
   ) => {
     if (!data) return;
-    const newRecurrence = { ...(data.recurrence || {}), [field]: value };
-    if (!value) {
-      delete newRecurrence[field];
-    }
-    setData({ ...data, recurrence: newRecurrence });
+    setData({ ...data, [field]: value });
   };
 
   const handleSave = async () => {
@@ -170,40 +154,11 @@ export default function EditEventPage() {
 
         {/* Recurrence Rules */}
         <div className="p-4 border rounded-md bg-white">
-          <h2 className="text-xl font-semibold mb-4">Recurrence (Optional)</h2>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="frequency" className="block text-sm font-medium text-gray-700">
-                Frequency
-              </label>
-              <select
-                id="frequency"
-                value={data.recurrence?.frequency || ""}
-                onChange={(e) => handleRecurrenceChange("frequency", e.target.value || undefined)}
-                className="mt-1 block w-full input"
-              >
-                <option value="">One Time Event</option>
-                <option value="WEEKLY">Weekly</option>
-                <option value="MONTHLY">Monthly</option>
-                <option value="YEARLY">Yearly</option>
-              </select>
-            </div>
-            {data.recurrence?.frequency && (
-              <div>
-                <label htmlFor="interval" className="block text-sm font-medium text-gray-700">
-                  Repeat every
-                </label>
-                <input
-                  type="number"
-                  id="interval"
-                  min="1"
-                  value={data.recurrence?.interval || 1}
-                  onChange={(e) => handleRecurrenceChange("interval", parseInt(e.target.value, 10))}
-                  className="mt-1 block w-full input"
-                />
-              </div>
-            )}
-          </div>
+          <h2 className="text-xl font-semibold mb-4">Event Schedule</h2>
+          <EventRecurrenceForm
+            value={data.repeat}
+            onChange={(repeatRule) => handleInputChange("repeat", repeatRule)}
+          />
         </div>
       </div>
 
