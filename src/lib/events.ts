@@ -12,22 +12,17 @@ import type { Event } from "./content";
  */
 export function getNextOccurrence(event: Event): string | null {
   const now = new Date();
-  // Create a UTC date for the beginning of today to ensure consistent comparisons
   const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const eventDate = new Date(`${event.date}T00:00:00Z`);
 
-  const eventDate = new Date(`${event.date}T00:00:00Z`); // Treat the date string as UTC
-
-  // If the event date is in the future, no need to reschedule.
   if (eventDate >= todayUTC) {
     return event.date;
   }
 
-  // If it's a non-recurring event in the past, it's over.
   if (!event.repeat) {
     return null;
   }
 
-  // Map string frequency to RRule frequency constant.
   const frequencyMap = {
     daily: RRule.DAILY,
     weekly: RRule.WEEKLY,
@@ -45,14 +40,12 @@ export function getNextOccurrence(event: Event): string | null {
     SA: RRule.SA,
   };
 
-  const { frequency, byday, bymonthday, ...rruleOptions } = event.repeat;
+  const { frequency, byday, bymonthday, interval, until } = event.repeat;
 
   const rruleConfig: Partial<RRule.Options> = {
-    ...rruleOptions,
-    // RRule expects the 'until' property to be a Date object, not a string.
-    // We also convert it to UTC to match our other date objects.
-    until: rruleOptions.until ? new Date(`${rruleOptions.until}T23:59:59Z`) : null,
-    freq: frequencyMap[event.repeat.frequency],
+    interval,
+    until: until ? new Date(`${until}T23:59:59Z`) : null,
+    freq: frequencyMap[frequency],
     dtstart: eventDate,
   };
 
@@ -64,7 +57,7 @@ export function getNextOccurrence(event: Event): string | null {
     if (typeof byday === "string") {
       const dayStr = byday.slice(-2);
       const nth = parseInt(byday.slice(0, -2), 10);
-      return weekdayMap[dayStr]?.nth(nth);
+      return weekdayMap[dayStr].nth(nth);
     }
     return null;
   })();
@@ -75,23 +68,13 @@ export function getNextOccurrence(event: Event): string | null {
     rruleConfig.bymonthday = bymonthday;
   }
 
-  // It's a recurring event in the past, so calculate the next occurrence.
-  // --- DEVELOPER LOG ---
-  // Log the configuration object to see what's causing the 'byday' error.
-  console.log("rruleConfig for event:", event.slug, rruleConfig);
-
   const rule = new RRule(rruleConfig);
-
-  // Get all occurrences from the start date until the end of the recurrence.
   const allOccurrences = rule.all();
-  // Find the first occurrence that is on or after today.
   const nextDate = allOccurrences.find((date) => date >= todayUTC);
 
-  // If a next date exists and it's before the 'until' date, return it.
   if (nextDate) {
     return nextDate.toISOString().split("T")[0];
   }
 
-  // No more occurrences.
   return null;
 }

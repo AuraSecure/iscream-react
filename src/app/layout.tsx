@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { getGeneralSettings } from "@/lib/content";
+import { Announcements } from "@/components";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,7 +20,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-cream text-dark-magenta`}>
+      <body className={`${inter.className} bg-hot-pink text-dark-magenta`}>
         <nav className="sticky top-0 z-50 bg-deep-magenta p-4 flex justify-between items-center shadow-lg h-16">
           <div>
             <Link
@@ -50,7 +51,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </Link>
           </div>
         </nav>
-        <div className="bg-hot-pink">{children}</div>
+        <Announcements />
+        <div>{children}</div>
       </body>
     </html>
   );

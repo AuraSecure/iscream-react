@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { getNextOccurrence } from "@/lib/events";
-import type { Event } from "@/lib/content";
+import type { Event, GeneralSettings } from "@/lib/content";
 import { gh, GitHubAPIError } from "@/lib/github";
+
+type GitHubFile = {
+  name: string;
+  path: string;
+  type: "file" | "dir";
+};
 
 export async function POST(request: Request) {
   // Protect the endpoint with a secret key
@@ -20,7 +26,7 @@ export async function POST(request: Request) {
   try {
     // 1. Fetch all event files from the GitHub repository
     console.log("--- Reschedule Job Started ---");
-    const files: any[] = await gh("content/events");
+    const files: GitHubFile[] = await gh("content/events");
 
     const updatedEvents: string[] = [];
     const errors: string[] = [];
@@ -32,10 +38,9 @@ export async function POST(request: Request) {
         // 2. Fetch the content of the event file
         const fileData: { content: string; sha: string } = await gh(file.path);
         const fileContent = Buffer.from(fileData.content, "base64").toString("utf-8");
-        const parsedEvent = JSON.parse(fileContent);
+        const parsedEvent = JSON.parse(fileContent) as Partial<Event>;
 
-        // FIX: Handle both 'date' and 'startDate' property names
-        const event: Event = { ...parsedEvent, date: parsedEvent.date || parsedEvent.startDate };
+        const event: Event = { ...parsedEvent, date: parsedEvent.date || parsedEvent.startDate } as Event;
         event.slug = file.name.replace(".json", "");
 
         if (!event.date) {
@@ -50,7 +55,7 @@ export async function POST(request: Request) {
 
         if (nextDate && nextDate !== originalDate) {
           console.log(`Updating event ${event.slug}: ${originalDate} -> ${nextDate}`);
-          // 4. If the date has changed, update the file in the GitHub repo
+          // 4. If the date has changed, update the file in the GitHub repo.
           const updatedEvent = { ...parsedEvent, date: nextDate, startDate: nextDate };
 
           const updatedContent = Buffer.from(JSON.stringify(updatedEvent, null, 2) + "\n").toString(
@@ -58,32 +63,27 @@ export async function POST(request: Request) {
           );
 
           const shaForUpdate = fileData.sha;
-          console.log(`Preparing to update ${file.name} with SHA: ${shaForUpdate}`);
 
-          const bodyForGithub = {
+          await gh(file.path, {
+            method: "PUT",
+            body: {
             message: `chore: auto-reschedule event ${event.slug}`,
             content: updatedContent,
             sha: shaForUpdate,
+            },
           };
-
-          console.log("Calling GitHub API to update file...");
-          await gh(file.path, {
-            method: "PUT",
-            body: bodyForGithub,
-          });
           console.log(`Successfully updated ${file.name}`);
 
           updatedEvents.push(`${event.slug} (from ${originalDate} -> ${nextDate})`);
         }
       } catch (e: any) {
-        errors.push(`Failed to process ${file.name}: ${e.message}`);
-        console.error(`--- ERROR processing ${file.name}: ---`);
+        const errorMessage = `Failed to process ${file.name}: ${e.message}`;
+        console.error(`--- ERROR: ${errorMessage} ---`);
         if (e instanceof GitHubAPIError) {
-          // If it's a GitHub API error, we have more context
           console.error(`GitHub API responded with status ${e.status}`);
-          errors.push(`GitHub API error for ${file.name}: Status ${e.status} - ${e.message}`);
         }
-        console.error(e); // Log the full error object, which might contain the GitHub API response
+        console.error(e);
+        errors.push(errorMessage);
       }
     }
 
@@ -95,6 +95,7 @@ export async function POST(request: Request) {
       });
     }
 
+    console.log("--- Reschedule Job Finished ---");
     if (errors.length > 0) {
       return NextResponse.json(
         { status: "error", message: "Some events failed to update.", errors, updatedEvents },
@@ -112,7 +113,6 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     console.error("--- FATAL Reschedule API Error ---");
-    console.error("Reschedule API Error:", error);
     return NextResponse.json(
       { status: "error", message: `An unexpected error occurred: ${error.message}` },
       { status: 500 }

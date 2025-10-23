@@ -25,6 +25,14 @@ export interface Event {
   };
 }
 
+export interface Announcement {
+  slug: string;
+  title: string;
+  text: string;
+  startDate: string;
+  endDate: string;
+}
+
 function getSiteURL() {
   return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 }
@@ -47,4 +55,27 @@ export async function getEvents(options?: RequestInit): Promise<Event[]> {
   }
   const data = await res.json();
   return data;
+}
+
+export async function getAnnouncements(options?: RequestInit): Promise<Announcement[]> {
+  const res = await fetch(`${getSiteURL()}/api/content/announcements?full=true`, {
+    ...options,
+  });
+  if (!res.ok) {
+    throw new Error("Failed to fetch announcements");
+  }
+  const announcements: Announcement[] = await res.json();
+
+  // Filter for active announcements on the server
+  const now = new Date();
+  return announcements.filter((announcement) => {
+    if (!announcement.startDate || !announcement.endDate) {
+      return false;
+    }
+    const startDate = new Date(announcement.startDate);
+    const endDate = new Date(announcement.endDate);
+    // Set endDate to the end of the day
+    endDate.setHours(23, 59, 59, 999);
+    return now >= startDate && now <= endDate;
+  });
 }

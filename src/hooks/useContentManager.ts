@@ -7,6 +7,7 @@ interface UseContentManagerOptions<T> {
   onLoad?: (data: T) => void;
   onSave?: (data: T) => void;
   disabled?: boolean;
+  initialData?: T;
 }
 
 export function useContentManager<T>({
@@ -14,6 +15,7 @@ export function useContentManager<T>({
   onLoad,
   onSave,
   disabled,
+  initialData: providedInitialData,
 }: UseContentManagerOptions<T>) {
   const [data, setData] = useState<T | null>(null);
   const [sha, setSha] = useState<string | null>(null);
@@ -27,12 +29,22 @@ export function useContentManager<T>({
 
   const loadData = useCallback(() => {
     setLoading(true);
-    if (disabled) {
+    if (disabled || !apiPath) {
+      if (providedInitialData) {
+        setData(providedInitialData);
+        setInitialData(JSON.parse(JSON.stringify(providedInitialData)));
+      }
       setLoading(false);
       return;
     }
     fetch(apiPath, { cache: "no-store" })
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) {
+          throw new Error(`Failed to fetch: ${r.status} ${r.statusText}`);
+        }
+        // Handle cases where the response might be empty (e.g. 204 No Content)
+        return r.text().then((text) => (text ? JSON.parse(text) : {}));
+      })
       .then((fetchedData) => {
         if (fetchedData.error) {
           setMsg(`❌ Failed to load content: ${fetchedData.error}`);
@@ -53,10 +65,13 @@ export function useContentManager<T>({
       .finally(() => {
         setLoading(false);
       });
-  }, [apiPath, onLoad, disabled]);
+  }, [apiPath, onLoad, disabled, providedInitialData]);
 
   useEffect(() => {
-    if (!disabled) {
+    if (disabled && providedInitialData) {
+      setData(providedInitialData);
+      setInitialData(JSON.parse(JSON.stringify(providedInitialData)));
+    } else if (!disabled && apiPath) {
       loadData();
     }
   }, [loadData, disabled]);
