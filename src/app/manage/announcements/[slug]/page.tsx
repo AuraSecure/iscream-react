@@ -16,10 +16,9 @@ export default function EditAnnouncementPage() {
     useContentManager<AnnouncementData>({
       apiPath: `/api/content/announcements/${slug}`,
       disabled: isNew,
-      onSave: async () => {
+      onSave: () => {
         // After saving, redirect back to the announcements list
-        // Use window.location to force a full page reload and avoid method inheritance issues
-        window.location.href = "/manage/announcements";
+        router.push("/manage/announcements");
       },
       initialData: isNew
         ? {
@@ -62,8 +61,8 @@ export default function EditAnnouncementPage() {
         if (!res.ok) throw new Error(await res.text());
 
         setMsg("✅ Saved successfully!");
-        // Use window.location to force a full page reload and avoid method inheritance issues
-        window.location.href = "/manage/announcements";
+        // After creating, redirect back to the announcements list
+        router.push("/manage/announcements");
       } catch (e) {
         console.error(e);
         setMsg(`❌ Save failed: ${e instanceof Error ? e.message : String(e)}`);

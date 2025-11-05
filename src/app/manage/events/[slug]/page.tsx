@@ -1,21 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useContentManager } from "@/hooks/useContentManager";
 import { EventRecurrenceForm } from "@/components/manage/EventRecurrenceForm";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import type { Event } from "@/lib/content";
 
 // The data structure for a single event, matching our content model.
 // Note: The `useContentManager` hook is generic, so we use `Event` here.
 // The `date` property from the `Event` interface is used as `startDate`.
-type EventData = Omit<Event, "slug" | "date"> & { startDate: string };
+type EventData = Omit<Event, "slug">;
 
 export default function EditEventPage() {
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
   const isNew = slug === "new";
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Disable the hook from running on "new" pages since there's nothing to fetch.
   const {
@@ -30,13 +34,16 @@ export default function EditEventPage() {
   } = useContentManager<EventData>({
     apiPath: `/api/content/events/${slug}`,
     disabled: isNew,
+    onSave: () => {
+      router.push("/manage/events");
+    },
   });
 
   useEffect(() => {
     if (isNew && !data) {
       setData({
         title: "",
-        startDate: new Date().toISOString().split("T")[0],
+        date: new Date().toISOString().split("T")[0],
         description: "",
         image: "",
       });
@@ -45,6 +52,55 @@ export default function EditEventPage() {
 
   // For a new event, we manually control the saving state.
   const saving = isSavingExisting;
+
+  const processImageUpload = async (file: File) => {
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const base64Content = (reader.result as string).split(",")[1];
+        const res = await fetch("/api/content/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: file.name, content: base64Content }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const { path } = await res.json();
+        handleInputChange("image", path);
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed";
+      console.error(message);
+      setMsg(`❌ Image upload failed: ${message}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    processImageUpload(e.target.files?.[0] as File);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    processImageUpload(e.dataTransfer.files?.[0] as File);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
 
   const handleInputChange = (
     field: keyof EventData,
@@ -113,14 +169,14 @@ export default function EditEventPage() {
               />
             </div>
             <div>
-              <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">
-                Start Date
+              <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+                Date
               </label>
               <input
                 type="date"
-                id="startDate"
-                value={data.startDate}
-                onChange={(e) => handleInputChange("startDate", e.target.value)}
+                id="date"
+                value={data.date}
+                onChange={(e) => handleInputChange("date", e.target.value)}
                 className="mt-1 block w-full input"
               />
             </div>
@@ -136,21 +192,37 @@ export default function EditEventPage() {
                 className="mt-1 block w-full input"
               />
             </div>
-            <div>
-              <label htmlFor="image" className="block text-sm font-medium text-gray-700">
-                Image Path
-              </label>
-              <input
-                type="text"
-                id="image"
-                value={data.image || ""}
-                onChange={(e) => handleInputChange("image", e.target.value)}
-                className="mt-1 block w-full input"
-                placeholder="/images/events/your-image.png"
-              />
-            </div>
           </div>
         </div>
+
+        {/* Image Uploader */}
+        <div className="p-4 border rounded-md bg-white">
+          <h2 className="text-xl font-semibold mb-4">Event Image</h2>
+          {data.image && (
+            <div className="relative w-full max-w-sm mx-auto mb-4" style={{ aspectRatio: "8.5 / 11" }}>
+              <Image src={data.image} alt={data.title} fill className="object-cover rounded-md" />
+            </div>
+          )}
+          <div 
+            onClick={() => fileInputRef.current?.click()}
+            onDrop={handleDrop} 
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            className={`mt-2 flex cursor-pointer justify-center rounded-lg border border-dashed px-6 py-10 ${
+              isDragging ? 'border-blue-600 bg-blue-50' : 'border-gray-900/25 hover:border-blue-500'
+            }`}>
+            <div className="text-center">
+              <div className="mt-4 flex text-sm leading-6 text-gray-600">
+                <p className="relative rounded-md bg-white font-semibold text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2 hover:text-blue-500">
+                  <span>Upload a file</span>
+                </p>
+                <p className="pl-1">or drag and drop</p>
+                <input ref={fileInputRef} id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileSelect} />
+              </div>
+              <p className="text-xs leading-5 text-gray-600">PNG, JPG up to 10MB</p>
+            </div>
+          </div>
+          {isUploading && <p className="text-sm text-gray-500 mt-2">Uploading...</p>}
 
         {/* Recurrence Rules */}
         <div className="p-4 border rounded-md bg-white">

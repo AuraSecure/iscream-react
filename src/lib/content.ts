@@ -33,6 +33,10 @@ export interface Announcement {
   endDate: string;
 }
 
+export interface PartyInfo {
+  text: string;
+}
+
 function getSiteURL() {
   return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 }
@@ -78,4 +82,16 @@ export async function getAnnouncements(options?: RequestInit): Promise<Announcem
     endDate.setHours(23, 59, 59, 999);
     return now >= startDate && now <= endDate;
   });
+}
+
+export async function getPartyInfo(options?: RequestInit): Promise<PartyInfo> {
+  const res = await fetch(`${getSiteURL()}/api/content/parties`, {
+    ...options,
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error("Failed to fetch party info");
+  }
+  const data = await res.json();
+  return data.json;
 }

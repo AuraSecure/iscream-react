@@ -17,34 +17,14 @@ const managementSections = [
     description: "Site-wide banners and pop-ups.",
   },
   {
-    name: "Coffee Menu",
-    href: "/manage/coffee",
-    description: "Edit coffee, espresso, and other drinks.",
+    name: "Manage Menu",
+    href: "/manage/menu",
+    description: "Edit all menu items, including flavors, toppings, and food.",
   },
   {
-    name: "Ice Cream Flavors",
-    href: "/manage/flavors",
-    description: "Manage all ice cream flavor categories and items.",
-  },
-  {
-    name: "Ice Cream Toppings",
-    href: "/manage/toppings",
-    description: "Manage all topping categories and items.",
-  },
-  {
-    name: "Ice Cream Creations",
-    href: "/manage/creations",
-    description: "Sundaes, splits, shakes, and other creations.",
-  },
-  {
-    name: "Drinks and Floats",
-    href: "/manage/drinks",
-    description: "Manage sodas, floats, and other beverages.",
-  },
-  {
-    name: "Food (Hot Dogs, Chips,etc.)",
-    href: "/manage/food",
-    description: "Manage hot dogs, savory treats, and other food items.",
+    name: "Party Information",
+    href: "/manage/parties",
+    description: "Edit the paragraph about party bookings.",
   },
 ];
 

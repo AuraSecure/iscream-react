@@ -88,7 +88,7 @@ export default function ManageDrinksPage() {
     if (!data) return;
     const newData = JSON.parse(JSON.stringify(data));
     const categoryItems = newData.categories[categoryIndex].items;
-    categoryItems.push({ name: "" });
+    categoryItems.push({ name: "", description: "", price: undefined });
     setData(newData);
     setEditingItem({ categoryIndex: categoryIndex, itemIndex: categoryItems.length - 1 });
   };
@@ -226,7 +226,7 @@ export default function ManageDrinksPage() {
         <div className="flex justify-end gap-4">
           <button
             type="button"
-            onClick={handleDiscard}
+            onClick={() => hasChanges && handleDiscard()}
             disabled={!hasChanges || saving}
             className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
           >

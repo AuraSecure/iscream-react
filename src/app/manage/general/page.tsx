@@ -1,9 +1,11 @@
 "use client";
 
 import { useContentManager } from "@/hooks/useContentManager";
+import { useRouter } from "next/navigation";
 import type { GeneralSettings } from "@/lib/content";
 
 export default function ManageGeneralPage() {
+  const router = useRouter();
   const { data, setData, loading, saving, msg, hasChanges, save, handleDiscard } =
     useContentManager<GeneralSettings>({
       apiPath: "/api/content/general",
@@ -14,6 +16,7 @@ export default function ManageGeneralPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ paths: ["/", "/contact", "/events", "/menu"] }),
         });
+        router.push("/manage");
       },
     });
 

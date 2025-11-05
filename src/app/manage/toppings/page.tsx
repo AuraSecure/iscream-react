@@ -59,23 +59,24 @@ export default function ManageToppingsPage() {
     categoryIndex: number,
     itemIndex: number,
     newCategoryIndex: number,
-    newName: string,
-    newDescription: string
+    newItemData: Topping
   ) => {
     if (!data) return;
     const newData = JSON.parse(JSON.stringify(data)); // Deep copy
 
+    // Clean up empty optional fields
+    Object.keys(newItemData).forEach((key) => {
+      const typedKey = key as keyof Topping;
+      if (newItemData[typedKey] === "" || newItemData[typedKey] === null) {
+        delete newItemData[typedKey];
+      }
+    });
+
     if (categoryIndex === newCategoryIndex) {
-      // Item stays in the same category, just update its properties
-      const item = newData.categories[categoryIndex].items[itemIndex];
-      item.name = newName;
-      item.description = newDescription;
+      newData.categories[categoryIndex].items[itemIndex] = newItemData;
     } else {
-      // Item is moving to a new category
-      const [itemToMove] = newData.categories[categoryIndex].items.splice(itemIndex, 1);
-      itemToMove.name = newName;
-      itemToMove.description = newDescription;
-      newData.categories[newCategoryIndex].items.push(itemToMove);
+      newData.categories[categoryIndex].items.splice(itemIndex, 1);
+      newData.categories[newCategoryIndex].items.push(newItemData);
     }
 
     setData(newData); // Update the state with the modified data
@@ -228,7 +229,7 @@ export default function ManageToppingsPage() {
         <div className="flex justify-end gap-4">
           <button
             type="button"
-            onClick={handleDiscard}
+            onClick={() => hasChanges && handleDiscard()}
             disabled={!hasChanges || saving}
             className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
           >
@@ -255,19 +256,19 @@ export default function ManageToppingsPage() {
               onSubmit={(e) => {
                 e.preventDefault();
                 const form = e.currentTarget;
-                const newName = (form.elements.namedItem("name") as HTMLInputElement).value;
+                const newItemData: Topping = {
+                  name: (form.elements.namedItem("name") as HTMLInputElement).value,
+                  description: (form.elements.namedItem("description") as HTMLInputElement).value,
+                };
                 const newCategoryIndex = parseInt(
                   (form.elements.namedItem("category") as HTMLSelectElement).value,
                   10
                 );
-                const newDescription = (form.elements.namedItem("description") as HTMLInputElement)
-                  .value;
                 handleSaveItemEdit(
                   editingItem.categoryIndex,
                   editingItem.itemIndex,
                   newCategoryIndex,
-                  newName,
-                  newDescription
+                  newItemData
                 );
               }}
             >

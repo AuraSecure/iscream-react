@@ -9,13 +9,13 @@ interface CoffeeItem {
   description?: string;
 }
 
-interface CoffeeSection {
+interface CoffeeCategory {
   name: string;
   items: CoffeeItem[];
 }
 
 interface CoffeeData {
-  sections: CoffeeSection[];
+  categories: CoffeeCategory[];
 }
 
 export default function ManageCoffeePage() {
@@ -25,7 +25,7 @@ export default function ManageCoffeePage() {
     });
 
   const [editingItem, setEditingItem] = useState<{
-    sectionIndex: number;
+    categoryIndex: number;
     itemIndex: number;
   } | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -55,27 +55,27 @@ export default function ManageCoffeePage() {
   }, [editingItem]);
 
   const handleSaveItemEdit = (
-    sectionIndex: number,
+    categoryIndex: number,
     itemIndex: number,
-    newSectionIndex: number,
-    newName: string,
-    newPrice: number | undefined,
-    newDescription: string
+    newCategoryIndex: number,
+    newItemData: CoffeeItem
   ) => {
     if (!data) return;
     const newData = JSON.parse(JSON.stringify(data));
 
-    const updatedItem = {
-      name: newName,
-      price: newPrice,
-      description: newDescription,
-    };
+    // Clean up empty optional fields
+    Object.keys(newItemData).forEach((key) => {
+      const typedKey = key as keyof CoffeeItem;
+      if (newItemData[typedKey] === "" || newItemData[typedKey] === null) {
+        delete newItemData[typedKey];
+      }
+    });
 
-    if (sectionIndex === newSectionIndex) {
-      newData.sections[sectionIndex].items[itemIndex] = updatedItem;
+    if (categoryIndex === newCategoryIndex) {
+      newData.categories[categoryIndex].items[itemIndex] = newItemData;
     } else {
-      newData.sections[sectionIndex].items.splice(itemIndex, 1);
-      newData.sections[newSectionIndex].items.push(updatedItem);
+      newData.categories[categoryIndex].items.splice(itemIndex, 1);
+      newData.categories[newCategoryIndex].items.push(newItemData);
     }
 
     setData(newData);
@@ -84,39 +84,39 @@ export default function ManageCoffeePage() {
 
   const handleCancelItemEdit = () => setEditingItem(null);
 
-  const handleAddItem = (sectionIndex: number) => {
+  const handleAddItem = (categoryIndex: number) => {
     if (!data) return;
     const newData = JSON.parse(JSON.stringify(data));
-    const sectionItems = newData.sections[sectionIndex].items;
-    sectionItems.push({ name: "", description: "" });
+    const categoryItems = newData.categories[categoryIndex].items;
+    categoryItems.push({ name: "", description: "", price: undefined });
     setData(newData);
-    setEditingItem({ sectionIndex: sectionIndex, itemIndex: sectionItems.length - 1 });
+    setEditingItem({ categoryIndex: categoryIndex, itemIndex: categoryItems.length - 1 });
   };
 
-  const handleRemoveItem = (sectionIndex: number, itemIndex: number) => {
+  const handleRemoveItem = (categoryIndex: number, itemIndex: number) => {
     if (!data) return;
     if (!confirm("Are you sure you want to delete this item?")) return;
     const newData = JSON.parse(JSON.stringify(data));
-    newData.sections[sectionIndex].items.splice(itemIndex, 1);
+    newData.categories[categoryIndex].items.splice(itemIndex, 1);
     setData(newData);
   };
 
-  const handleAddSection = () => {
+  const handleAddCategory = () => {
     if (!data) return;
-    const sectionName = prompt("Enter new section name:");
-    if (sectionName) {
+    const categoryName = prompt("Enter new category name:");
+    if (categoryName) {
       const newData = JSON.parse(JSON.stringify(data));
-      newData.sections.push({ name: sectionName, items: [] });
+      newData.categories.push({ name: categoryName, items: [] });
       setData(newData);
     }
   };
 
-  const handleRemoveSection = (sectionIndex: number) => {
+  const handleRemoveCategory = (categoryIndex: number) => {
     if (!data) return;
-    const section = data.sections[sectionIndex];
-    const itemsCount = section.items.length;
+    const category = data.categories[categoryIndex];
+    const itemsCount = category.items.length;
 
-    let warningMessage = `Are you sure you want to permanently delete the "${section.name}" section?`;
+    let warningMessage = `Are you sure you want to permanently delete the "${category.name}" category?`;
     if (itemsCount > 0) {
       warningMessage += `\n\nThis will also delete all ${itemsCount} items inside it. This action cannot be undone.`;
     }
@@ -131,12 +131,12 @@ export default function ManageCoffeePage() {
     if (finalConfirmation !== confirmationText) return;
 
     const newData = JSON.parse(JSON.stringify(data));
-    newData.sections.splice(sectionIndex, 1);
+    newData.categories.splice(categoryIndex, 1);
     setData(newData);
   };
 
   const currentlyEditingItem = editingItem
-    ? data?.sections[editingItem.sectionIndex].items[editingItem.itemIndex]
+    ? data?.categories[editingItem.categoryIndex].items[editingItem.itemIndex]
     : null;
 
   if (loading) return <main style={{ padding: 24 }}>Loading coffee menu…</main>;
@@ -148,29 +148,29 @@ export default function ManageCoffeePage() {
         <h1 className="text-3xl font-bold">Manage Coffee Menu</h1>
         <button
           type="button"
-          onClick={handleAddSection}
+          onClick={handleAddCategory}
           className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"
         >
-          Add Section
+          Add Category
         </button>
       </div>
       <div className="space-y-6">
-        {data.sections.map((section, secIndex) => (
-          <div key={section.name} className="p-4 border rounded-md bg-white">
+        {data.categories.map((category, catIndex) => (
+          <div key={category.name} className="p-4 border rounded-md bg-white">
             <div className="flex justify-between items-center border-b pb-2 mb-4">
-              <h3 className="text-xl font-bold">{section.name}</h3>
+              <h3 className="text-xl font-bold">{category.name}</h3>
               <button
                 type="button"
-                onClick={() => handleRemoveSection(secIndex)}
+                onClick={() => handleRemoveCategory(catIndex)}
                 className="text-sm text-red-500 hover:text-red-700"
               >
-                Delete Section
+                Delete Category
               </button>
             </div>
             <div className="space-y-4">
-              {section.items.map((item, itemIndex) => (
+              {category.items.map((item, itemIndex) => (
                 <div
-                  key={`${secIndex}-${itemIndex}`}
+                  key={`${catIndex}-${itemIndex}`}
                   className="flex justify-between items-center p-2 border-b last:border-b-0"
                 >
                   <div>
@@ -187,14 +187,14 @@ export default function ManageCoffeePage() {
                     )}
                     <button
                       type="button"
-                      onClick={() => setEditingItem({ sectionIndex: secIndex, itemIndex })}
+                      onClick={() => setEditingItem({ categoryIndex: catIndex, itemIndex })}
                       className="px-3 py-1 bg-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-300"
                     >
                       Edit
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleRemoveItem(secIndex, itemIndex)}
+                      onClick={() => handleRemoveItem(catIndex, itemIndex)}
                       className="px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-md hover:bg-red-600"
                     >
                       Delete
@@ -206,7 +206,7 @@ export default function ManageCoffeePage() {
             <div className="mt-4">
               <button
                 type="button"
-                onClick={() => handleAddItem(secIndex)}
+                onClick={() => handleAddItem(catIndex)}
                 className="px-3 py-1 bg-blue-500 text-white text-sm font-semibold rounded-md hover:bg-blue-600"
               >
                 + Add Item
@@ -218,15 +218,15 @@ export default function ManageCoffeePage() {
       <div className="mt-8 flex justify-between items-center gap-4">
         <button
           type="button"
-          onClick={handleAddSection}
+          onClick={handleAddCategory}
           className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"
         >
-          + Add Section
+          + Add Category
         </button>
         <div className="flex justify-end gap-4">
           <button
             type="button"
-            onClick={handleDiscard}
+            onClick={() => hasChanges && handleDiscard()}
             disabled={!hasChanges || saving}
             className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
           >
@@ -252,22 +252,23 @@ export default function ManageCoffeePage() {
               onSubmit={(e) => {
                 e.preventDefault();
                 const form = e.currentTarget;
-                const newName = (form.elements.namedItem("name") as HTMLInputElement).value;
                 const newPriceRaw = (form.elements.namedItem("price") as HTMLInputElement).value;
-                const newPrice = newPriceRaw ? parseFloat(newPriceRaw) : undefined;
-                const newSectionIndex = parseInt(
-                  (form.elements.namedItem("section") as HTMLSelectElement).value,
+
+                const newItemData: CoffeeItem = {
+                  name: (form.elements.namedItem("name") as HTMLInputElement).value,
+                  price: newPriceRaw ? parseFloat(newPriceRaw) : undefined,
+                  description: (form.elements.namedItem("description") as HTMLInputElement).value,
+                };
+
+                const newCategoryIndex = parseInt(
+                  (form.elements.namedItem("category") as HTMLSelectElement).value,
                   10
                 );
-                const newDescription = (form.elements.namedItem("description") as HTMLInputElement)
-                  .value;
                 handleSaveItemEdit(
-                  editingItem.sectionIndex,
+                  editingItem.categoryIndex,
                   editingItem.itemIndex,
-                  newSectionIndex,
-                  newName,
-                  newPrice,
-                  newDescription
+                  newCategoryIndex,
+                  newItemData
                 );
               }}
             >
@@ -311,18 +312,18 @@ export default function ManageCoffeePage() {
                 />
               </div>
               <div className="mb-6">
-                <label htmlFor="section" className="block text-sm font-medium text-gray-700">
-                  Section
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                  Category
                 </label>
                 <select
-                  id="section"
-                  name="section"
-                  defaultValue={editingItem.sectionIndex}
+                  id="category"
+                  name="category"
+                  defaultValue={editingItem.categoryIndex}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 >
-                  {data.sections.map((sec, index) => (
+                  {data.categories.map((cat, index) => (
                     <option key={index} value={index}>
-                      {sec.name}
+                      {cat.name}
                     </option>
                   ))}
                 </select>

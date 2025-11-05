@@ -11,28 +11,49 @@ export async function GET() {
       `content/events?ref=${process.env.GITHUB_BRANCH || "main"}`
     );
 
-    // Guard against non-array responses before iterating
     if (!Array.isArray(files)) {
+      console.warn("GitHub API did not return an array for content/events");
       return NextResponse.json([]);
     }
 
-    const events = await Promise.all(
-      files
-        .filter((f) => f.type === "file" && f.name.endsWith(".json"))
-        .map(async (file) => {
-          const res = await fetch(file.download_url); // download_url is already authenticated
+    const eventPromises = files
+      .filter((file) => file.type === "file" && file.name.endsWith(".json"))
+      .map(async (file) => {
+        try {
+          const res = await fetch(file.download_url);
+          if (!res.ok) {
+            console.error(`Failed to fetch ${file.download_url}: ${res.statusText}`);
+            return null;
+          }
           const data = await res.json();
+
+          // Coalesce date and startDate to handle data inconsistency
+          const eventDate = data.date || data.startDate;
+
+          // Validate essential fields
+          if (!data || typeof data.title !== "string" || typeof eventDate !== "string") {
+            console.warn(`Skipping invalid event file (missing title or date): ${file.name}`);
+            return null;
+          }
+
           return {
             ...data,
+            date: eventDate, // Standardize the output to always have a `date` property
             slug: file.name.replace(/\.json$/, ""),
-            sha: file.sha, // Include the sha for delete operations
+            sha: file.sha,
           };
-        })
-    );
+        } catch (error) {
+          console.error(`Error processing event file ${file.name}:`, error);
+          return null;
+        }
+      });
+
+    const events = (await Promise.all(eventPromises)).filter(Boolean);
 
     return NextResponse.json(events);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    console.error("Failed to get events:", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

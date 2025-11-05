@@ -46,8 +46,8 @@ export default function ManageAnnouncementsPage() {
 
       if (!res.ok) throw new Error(await res.text());
 
-      // Force a full page reload to ensure the list is in sync with the server
-      window.location.reload();
+      can; // Remove the deleted announcement from the local state to update the UI instantly.
+      setAnnouncements((prev) => prev.filter((a) => a.slug !== slug));
     } catch (e) {
       alert(`Failed to delete announcement: ${e instanceof Error ? e.message : String(e)}`);
     }
