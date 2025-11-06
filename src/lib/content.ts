@@ -58,7 +58,7 @@ export async function getEvents(options?: RequestInit): Promise<Event[]> {
     throw new Error("Failed to fetch events");
   }
   const data = await res.json();
-  return data;
+  return data.events;
 }
 
 export async function getAnnouncements(options?: RequestInit): Promise<Announcement[]> {

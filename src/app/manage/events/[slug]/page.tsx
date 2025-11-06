@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useContentManager } from "@/hooks/useContentManager";
-import { EventRecurrenceForm } from "@/components/manage/EventRecurrenceForm";
+import EventRecurrenceForm from "@/components/manage/EventRecurrenceForm";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import type { Event } from "@/lib/content";
@@ -198,7 +198,7 @@ export default function EditEventPage() {
         {/* Image Uploader */}
         <div className="p-4 border rounded-md bg-white">
           <h2 className="text-xl font-semibold mb-4">Event Image</h2>
-          {data.image && (
+          {(data.image && data.image.startsWith('/')) && (
             <div className="relative w-full max-w-sm mx-auto mb-4" style={{ aspectRatio: "8.5 / 11" }}>
               <Image src={data.image} alt={data.title} fill className="object-cover rounded-md" />
             </div>
@@ -223,13 +223,15 @@ export default function EditEventPage() {
             </div>
           </div>
           {isUploading && <p className="text-sm text-gray-500 mt-2">Uploading...</p>}
+        </div>
 
         {/* Recurrence Rules */}
         <div className="p-4 border rounded-md bg-white">
           <h2 className="text-xl font-semibold mb-4">Event Schedule</h2>
           <EventRecurrenceForm
-            value={data.repeat}
+            recurrence={data.repeat}
             onChange={(repeatRule) => handleInputChange("repeat", repeatRule)}
+            startDate={data.date}
           />
         </div>
       </div>

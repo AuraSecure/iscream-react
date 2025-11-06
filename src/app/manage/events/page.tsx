@@ -1,4 +1,5 @@
 "use client";
+import { formatDate } from "@/lib/date";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -7,6 +8,8 @@ interface EventStub {
   slug: string;
   path: string;
   sha: string;
+  title: string;
+  date: string;
 }
 
 export default function ManageEventsPage() {
@@ -15,7 +18,7 @@ export default function ManageEventsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/content/events", { cache: "no-store" })
+    fetch("/api/content/events?full=true", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
         if (data.error) {
@@ -79,7 +82,12 @@ export default function ManageEventsPage() {
                 key={event.slug}
                 className="flex justify-between items-center p-4 bg-white rounded-lg border"
               >
-                <span className="font-semibold">{event.slug}</span>
+                <div className="flex flex-col">
+                  <span className="font-semibold">{event.title}</span>
+
+
+                  <span className="text-sm text-gray-500">{formatDate(event.date)}</span>
+                </div>
                 <div className="flex gap-4">
                   <Link
                     href={`/manage/events/${event.slug}`}

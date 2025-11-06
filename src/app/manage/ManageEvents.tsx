@@ -1,4 +1,5 @@
 "use client";
+import { formatDate } from "@/lib/date";
 
 import { useEffect, useState } from "react";
 import type { Event } from "@/lib/content";
@@ -182,8 +183,9 @@ export default function ManageEvents() {
           >
             <div>
               <p className="font-bold">{event.title}</p>
-              <p className="text-sm text-gray-600">{new Date(event.date).toLocaleDateString()}</p>
-            </div>
+
+              
+                              <p className="text-sm text-gray-600">{formatDate(event.date)}</p>            </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setEditingEvent(event)}

@@ -1,4 +1,5 @@
 "use client";
+import { formatDate } from "@/lib/date";
 
 import { useState, useMemo } from "react";
 import type { Event } from "@/lib/content";
@@ -6,13 +7,16 @@ import type { Event } from "@/lib/content";
 import Image from "next/image";
 
 function EventCard({ event, faded = false }: { event: Event; faded?: boolean }) {
+  // TEMPORARY FIX: Validate image path to prevent crash from local file paths
+  const isValidImageSrc = event.image && event.image.startsWith("/");
+
   return (
     <div
       className={`rounded-2xl shadow-lg transition-transform hover:-translate-y-1 overflow-hidden ${
         faded ? "bg-[#222]/60 text-gray-400" : "bg-[#1a1a1a] hover:bg-[#242424]"
       }`}
     >
-      {event.image && (
+      {isValidImageSrc && (
         <div className="relative w-full" style={{ aspectRatio: "8.5 / 11" }}>
           <Image
             src={event.image}
@@ -24,15 +28,11 @@ function EventCard({ event, faded = false }: { event: Event; faded?: boolean }) 
       )}
       <div className="p-5">
         <h3 className="text-2xl font-bold text-[#ff3b7f] mb-2">{event.title}</h3>
-        <p className="text-sm text-gray-400 mb-3">
-          {new Date(event.date).toLocaleDateString(undefined, {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          })}
-          {event.time && ` • ${event.time}`}
-        </p>
+
+
+              <p className="text-lg font-semibold text-gray-800">
+                {formatDate(event.date)}
+              </p>
         <p className="text-gray-200">{event.description}</p>
         {event.location && <p className="mt-3 text-xs text-[#9fffe0]">{event.location}</p>}
       </div>

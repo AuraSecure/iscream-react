@@ -1,152 +1,197 @@
 "use client";
-
 import { Event } from "@/lib/content";
-import { useMemo } from "react";
-
-type RepeatRule = Event["repeat"];
+import { useState, useEffect } from "react";
 
 interface EventRecurrenceFormProps {
-  value: RepeatRule | undefined;
-  onChange: (value: RepeatRule | undefined) => void;
+  recurrence: Event["repeat"];
+  onChange: (recurrence: Event["repeat"]) => void;
+  startDate: string;
 }
 
-const weekDays = [
-  { label: "Sun", value: "SU" },
-  { label: "Mon", value: "MO" },
-  { label: "Tue", value: "TU" },
-  { label: "Wed", value: "WE" },
-  { label: "Thu", value: "TH" },
-  { label: "Fri", value: "FR" },
-  { label: "Sat", value: "SA" },
-];
-
-const monthlyPositions = [
-  { label: "first", value: 1 },
-  { label: "second", value: 2 },
-  { label: "third", value: 3 },
-  { label: "fourth", value: 4 },
-  { label: "last", value: -1 },
-];
-
-export function EventRecurrenceForm({ value, onChange }: EventRecurrenceFormProps) {
-  // Derived state is often simpler than syncing with useEffect
-  const frequency = useMemo(() => value?.frequency ?? "none", [value]);
-
-  // Helper to update a specific field in the recurrence rule.
-  // Using a function for the new value allows for clearing fields.
-  const updateRule = (field: keyof RepeatRule, fieldValue: any) => {
-    let newRule = {
-      ...(value || { frequency: "weekly", interval: 1 }), // Provide a default base
-      [field]: fieldValue,
-    };
-    // Clean up undefined fields
-    if (fieldValue === undefined) {
-      delete newRule[field];
-    }
-    onChange(newRule);
+export default function EventRecurrenceForm({
+  recurrence,
+  onChange,
+  startDate,
+}: EventRecurrenceFormProps) {
+  const handleFrequencyChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    onChange({
+      ...(recurrence || {}),
+      frequency: e.target.value as any,
+    });
   };
 
-  const handleFrequencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newFrequency = e.target.value as RepeatRule["frequency"] | "none";
+  const handleIntervalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange({
+      ...(recurrence || {}),
+      interval: parseInt(e.target.value, 10),
+    });
+  };
 
-    if (newFrequency === "none") {
-      onChange(undefined);
-    } else {
-      // Reset to a sensible default when frequency changes
+  const handleUntilChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange({
+      ...(recurrence || {}),
+      until: e.target.value,
+    });
+  };
+
+  const handleByDayToggle = (day: string) => {
+    const byday = (recurrence?.byday as string[]) || [];
+    const newByday = byday.includes(day)
+      ? byday.filter((d) => d !== day)
+      : [...byday, day];
+    onChange({
+      ...(recurrence || {}),
+      byday: newByday,
+    });
+  };
+
+  const handleByMonthDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange({
+      ...(recurrence || {}),
+      bymonthday: parseInt(e.target.value, 10),
+    });
+  };
+
+  const handleEndsOnChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setEndsOn(e.target.value);
+    if (e.target.value === "never") {
       onChange({
-        frequency: newFrequency,
-        interval: 1,
+        ...(recurrence || {}),
+        until: undefined,
       });
     }
   };
 
-  const handleWeekdayToggle = (dayValue: string) => {
-    const currentByDay = Array.isArray(value?.byday) ? value.byday : [];
-    const newByDay = currentByDay.includes(dayValue)
-      ? currentByDay.filter((d) => d !== dayValue)
-      : [...currentByDay, dayValue];
+  const [endsOn, setEndsOn] = useState("never");
 
-    // Sort the days to maintain a consistent order
-    newByDay.sort(
-      (a, b) => weekDays.findIndex((d) => d.value === a) - weekDays.findIndex((d) => d.value === b)
-    );
+  const [monthlyType, setMonthlyType] = useState("day");
 
-    updateRule("byday", newByDay.length > 0 ? newByDay : undefined);
-  };
-
-  const handleMonthlyRuleChange = (ruleType: "day" | "weekday", pos?: number, day?: string) => {
-    if (ruleType === "day") {
+  const handleMonthlyTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setMonthlyType(e.target.value);
+    if (e.target.value === "day") {
       onChange({
-        ...value,
-        bymonthday: 15, // Default to the 15th
+        ...(recurrence || {}),
         byday: undefined,
+        bymonthday: new Date(startDate).getDate(),
       });
     } else {
-      // Default to the first Sunday if not specified
-      const newPos = pos || 1;
-      const newDay = day || "SU";
       onChange({
-        ...value,
+        ...(recurrence || {}),
         bymonthday: undefined,
-        byday: `${newPos}${newDay}`,
+        byday: "1SU",
       });
     }
+  };
+
+  const handleMonthlyNthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const nth = parseInt(e.target.value, 10);
+    const byday = (recurrence?.byday as string[]) || [];
+    const day = byday.length > 0 ? byday[0].slice(-2) : "SU";
+    onChange({
+      ...(recurrence || {}),
+      byday: `${nth}${day}`,
+      bymonthday: undefined,
+    });
+  };
+
+  const handleMonthlyDayChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const day = e.target.value;
+    const byday = (recurrence?.byday as string) || "";
+    const nth = byday.slice(0, -2);
+    onChange({
+      ...(recurrence || {}),
+      byday: `${nth}${day}`,
+      bymonthday: undefined,
+    });
+  };
+
+  const getSummary = () => {
+    if (!recurrence) return "";
+
+    const { frequency, interval, byday, bymonthday, until } = recurrence;
+    let summary = `Repeats every ${interval} ${frequency.replace("ly", "")}s`;
+
+    if (frequency === "weekly" && byday && (byday as string[]).length > 0) {
+      summary += ` on ${(byday as string[]).join(", ")}`;
+    }
+
+    if (frequency === "monthly" && bymonthday) {
+      summary += ` on day ${bymonthday}`;
+    }
+
+    if (until) {
+      summary += `, until ${until}`;
+    }
+
+    return summary;
   };
 
   return (
-    <div className="p-4 border rounded-md bg-gray-50 space-y-4">
-      <div className="flex items-center gap-4">
-        <label htmlFor="frequency" className="font-medium text-gray-700">
-          Repeats
-        </label>
-        <select
-          id="frequency"
-          name="frequency"
-          value={frequency}
-          onChange={handleFrequencyChange}
-          className="p-2 border border-gray-300 rounded-md"
-        >
-          <option value="none">One Time</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-          <option value="yearly">Yearly</option>
-        </select>
-      </div>
+    <div className="space-y-4">
+      <label className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          checked={!!recurrence}
+          onChange={(e) =>
+            onChange(
+              e.target.checked
+                ? {
+                    frequency: "monthly",
+                    interval: 1,
+                    bymonthday: new Date(startDate).getDate(),
+                  }
+                : undefined
+            )
+          }
+        />
+        <span>Repeats</span>
+      </label>
 
-      {frequency !== "none" && value && (
-        <>
-          {/* --- Interval --- */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="interval" className="text-sm text-gray-600">
-              Every
-            </label>
+      {recurrence && (
+        <div className="space-y-4 p-4 border rounded-md">
+          <div className="flex items-center space-x-2">
+            <span>Every</span>
             <input
               type="number"
-              id="interval"
-              name="interval"
-              min="1"
-              value={value.interval || 1}
-              onChange={(e) => updateRule("interval", parseInt(e.target.value, 10) || 1)}
-              className="w-16 p-1 border border-gray-300 rounded-md"
+              value={recurrence.interval || 1}
+              onChange={handleIntervalChange}
+              className="w-16 input"
             />
-            <span className="text-sm text-gray-600">{value.frequency}(s)</span>
+            <select
+              value={recurrence.frequency}
+              onChange={handleFrequencyChange}
+              className="input"
+            >
+              <option value="daily">day(s)</option>
+              <option value="weekly">week(s)</option>
+              <option value="monthly">month(s)</option>
+              <option value="yearly">year(s)</option>
+            </select>
           </div>
 
-          {/* --- Weekly Options --- */}
-          {value.frequency === "weekly" && (
-            <div className="pt-2">
-              <p className="text-sm font-medium text-gray-600 mb-2">On days:</p>
-              <div className="flex flex-wrap gap-2">
-                {weekDays.map((day) => (
+          {recurrence.frequency === "weekly" && (
+            <div className="flex items-center space-x-2">
+              <span>on</span>
+              <div className="flex space-x-2">
+                {[
+                  { label: "S", value: "SU" },
+                  { label: "M", value: "MO" },
+                  { label: "T", value: "TU" },
+                  { label: "W", value: "WE" },
+                  { label: "T", value: "TH" },
+                  { label: "F", value: "FR" },
+                  { label: "S", value: "SA" },
+                ].map((day) => (
                   <button
                     key={day.value}
                     type="button"
-                    onClick={() => handleWeekdayToggle(day.value)}
-                    className={`px-3 py-1 text-sm rounded-full border transition-colors ${
-                      value.byday?.includes(day.value)
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white hover:bg-gray-100 border-gray-300"
-                    }`}
+                    onClick={() => handleByDayToggle(day.value)}
+                    className={`w-8 h-8 rounded-full ${((recurrence.byday as string[]) || []).includes(day.value)
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-200"
+                      }`}
                   >
                     {day.label}
                   </button>
@@ -155,102 +200,72 @@ export function EventRecurrenceForm({ value, onChange }: EventRecurrenceFormProp
             </div>
           )}
 
-          {/* --- Monthly Options --- */}
-          {value.frequency === "monthly" && (
-            <div className="pt-2 space-y-2">
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="monthly-on-day"
-                  name="monthly-rule"
-                  checked={!!value.bymonthday || !value.byday}
-                  onChange={() => handleMonthlyRuleChange("day")}
-                />
-                <label htmlFor="monthly-on-day" className="text-sm text-gray-600">
-                  On day
-                </label>
+          {recurrence.frequency === "monthly" && (
+            <div className="flex items-center space-x-2">
+              <span>on</span>
+              <select value={monthlyType} onChange={handleMonthlyTypeChange} className="input">
+                <option value="day">day</option>
+                <option value="the">the</option>
+              </select>
+              {monthlyType === "day" && (
                 <input
                   type="number"
-                  min="1"
-                  max="31"
-                  value={value.bymonthday || 15}
-                  disabled={!value.bymonthday && !!value.byday}
-                  onChange={(e) => updateRule("bymonthday", parseInt(e.target.value, 10))}
-                  className="w-16 p-1 border border-gray-300 rounded-md disabled:bg-gray-100"
+                  value={recurrence.bymonthday || ""}
+                  onChange={handleByMonthDayChange}
+                  className="w-16 input"
                 />
-              </div>
-              <p className="text-center text-xs text-gray-500">OR</p>
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="monthly-on-weekday"
-                  name="monthly-rule"
-                  checked={typeof value.byday === "string"}
-                  onChange={() => handleMonthlyRuleChange("weekday")}
-                />
-                <label htmlFor="monthly-on-weekday" className="text-sm text-gray-600">
-                  On the
-                </label>
-                <select
-                  disabled={typeof value.byday !== "string"}
-                  className="p-1 border border-gray-300 rounded-md disabled:bg-gray-100"
-                  value={parseInt(String(value.byday).match(/-?\d+/)?.[0] || "1", 10)}
-                  onChange={(e) =>
-                    handleMonthlyRuleChange(
-                      "weekday",
-                      parseInt(e.target.value, 10),
-                      String(value.byday).slice(-2)
-                    )
-                  }
-                >
-                  {monthlyPositions.map((pos) => (
-                    <option key={pos.value} value={pos.value}>
-                      {pos.label}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  disabled={typeof value.byday !== "string"}
-                  className="p-1 border border-gray-300 rounded-md disabled:bg-gray-100"
-                  value={String(value.byday).slice(-2)}
-                  onChange={(e) =>
-                    handleMonthlyRuleChange(
-                      "weekday",
-                      parseInt(String(value.byday).match(/-?\d+/)?.[0] || "1", 10),
-                      e.target.value
-                    )
-                  }
-                >
-                  {weekDays.map((day) => (
-                    <option key={day.value} value={day.value}>
-                      {day.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              )}
+              {monthlyType === "the" && (
+                <div className="flex items-center space-x-2">
+                  <select
+                    value={((recurrence.byday as string) || "").slice(0, -2)}
+                    onChange={handleMonthlyNthChange}
+                    className="input"
+                  >
+                    <option value="1">First</option>
+                    <option value="2">Second</option>
+                    <option value="3">Third</option>
+                    <option value="4">Fourth</option>
+                    <option value="-1">Last</option>
+                  </select>
+                  <select
+                    value={((recurrence.byday as string) || "").slice(-2)}
+                    onChange={handleMonthlyDayChange}
+                    className="input"
+                  >
+                    <option value="SU">Sunday</option>
+                    <option value="MO">Monday</option>
+                    <option value="TU">Tuesday</option>
+                    <option value="WE">Wednesday</option>
+                    <option value="TH">Thursday</option>
+                    <option value="FR">Friday</option>
+                    <option value="SA">Saturday</option>
+                  </select>
+                </div>
+              )}
             </div>
           )}
 
-          {/* --- End Date --- */}
-          <div className="pt-4 border-t">
-            <div className="flex items-center gap-2">
-              <label htmlFor="until" className="text-sm font-medium text-gray-700">
-                Ends on
-              </label>
+          <div className="flex items-center space-x-2">
+            <span>Ends</span>
+            <select value={endsOn} onChange={handleEndsOnChange} className="input">
+              <option value="never">Never</option>
+              <option value="on">On</option>
+            </select>
+            {endsOn === "on" && (
               <input
                 type="date"
-                id="until"
-                name="until"
-                value={value.until || ""}
-                onChange={(e) => updateRule("until", e.target.value || undefined)}
-                className="p-1 border border-gray-300 rounded-md"
+                value={recurrence.until || ""}
+                onChange={handleUntilChange}
+                className="input"
               />
-            </div>
-            <p className="text-xs text-gray-500 mt-1 pl-2">
-              Leave blank for the event to repeat forever.
-            </p>
+            )}
           </div>
-        </>
+
+          <div className="col-span-1 md:col-span-2">
+            <p className="text-sm text-gray-500">{getSummary()}</p>
+          </div>
+        </div>
       )}
     </div>
   );
