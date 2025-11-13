@@ -4,6 +4,7 @@ import EventsList from "./EventsList";
 export default async function EventsPage() {
   // Fetch events directly on the server
   const events = await getEvents();
+  console.log("Events received in EventsPage:", events);
 
   const sorted = [...events].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()

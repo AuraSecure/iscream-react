@@ -1,20 +1,20 @@
 "use client";
 import { formatDate } from "@/lib/date";
-
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import type { Event } from "@/lib/content";
 
 import Image from "next/image";
 
-function EventCard({ event, faded = false }: { event: Event; faded?: boolean }) {
+function EventCard({ event, faded = false, className = "", onSelect }: { event: Event; faded?: boolean; className?: string; onSelect: (slug: string) => void }) {
   // TEMPORARY FIX: Validate image path to prevent crash from local file paths
   const isValidImageSrc = event.image && event.image.startsWith("/");
 
   return (
     <div
+      onClick={() => onSelect(event.slug)}
       className={`rounded-2xl shadow-lg transition-transform hover:-translate-y-1 overflow-hidden ${
-        faded ? "bg-[#222]/60 text-gray-400" : "bg-[#1a1a1a] hover:bg-[#242424]"
-      }`}
+        faded ? "bg-gray-800 opacity-75 text-gray-400" : "bg-[#1a1a1a] hover:bg-[#242424]"
+      } ${className}`}
     >
       {isValidImageSrc && (
         <div className="relative w-full" style={{ aspectRatio: "8.5 / 11" }}>
@@ -22,20 +22,10 @@ function EventCard({ event, faded = false }: { event: Event; faded?: boolean }) 
             src={event.image}
             alt={event.title}
             fill
-            className="object-cover"
+            className="object-contain"
           />
         </div>
       )}
-      <div className="p-5">
-        <h3 className="text-2xl font-bold text-[#ff3b7f] mb-2">{event.title}</h3>
-
-
-              <p className="text-lg font-semibold text-gray-800">
-                {formatDate(event.date)}
-              </p>
-        <p className="text-gray-200">{event.description}</p>
-        {event.location && <p className="mt-3 text-xs text-[#9fffe0]">{event.location}</p>}
-      </div>
     </div>
   );
 }
@@ -62,9 +52,67 @@ export default function EventsList({ events }: { events: Event[] }) {
   }, [sortedEvents]);
 
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [animatedEvents, setAnimatedEvents] = useState<Event[]>([]);
+  const prevEventsToShowRef = useRef<Event[]>([]);
+  const [animationDirection, setAnimationDirection] = useState<'left' | 'right' | null>(null);
+  const [selectedEventSlug, setSelectedEventSlug] = useState<string | null>(null); // New state for selected event
 
-  // Effect to reset index if initialIndex changes (e.g. on hot-reload or data change)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: We only want to run this when initialIndex changes
+  const eventsToShow = useMemo(() => {
+    return sortedEvents.slice(currentIndex, currentIndex + 3);
+  }, [sortedEvents, currentIndex]);
+
+  useEffect(() => {
+    const prevEvents = prevEventsToShowRef.current;
+    const newEvents = eventsToShow;
+
+    // Determine animation direction
+    const newCurrentIndex = sortedEvents.indexOf(newEvents[0]);
+    const oldCurrentIndex = sortedEvents.indexOf(prevEvents[0]);
+    if (newCurrentIndex > oldCurrentIndex) {
+      setAnimationDirection('left'); // Moving to newer events (left slide)
+    } else if (newCurrentIndex < oldCurrentIndex) {
+      setAnimationDirection('right'); // Moving to older events (right slide)
+    } else {
+      setAnimationDirection(null);
+    }
+
+    // Identify events that are currently displayed and should remain
+    const commonEvents = newEvents.filter(newEvent =>
+      prevEvents.some(prevEvent => prevEvent.slug === newEvent.slug)
+    );
+
+    // Identify events that are exiting
+    const exitingEvents = prevEvents.filter(prevEvent =>
+      !newEvents.some(newEvent => newEvent.slug === prevEvent.slug)
+    ).map(event => ({ ...event, animationState: 'exiting' }));
+
+    // Identify events that are entering
+    const enteringEvents = newEvents.filter(newEvent =>
+      !prevEvents.some(prevEvent => prevEvent.slug === newEvent.slug)
+    ).map(event => ({ ...event, animationState: 'entering' }));
+
+    // Combine all events: common, exiting, and entering
+    // Exiting events are placed first to ensure they are rendered below entering events if z-index is not managed
+    setAnimatedEvents([...exitingEvents, ...commonEvents, ...enteringEvents]);
+
+    // Update ref for next render
+    prevEventsToShowRef.current = newEvents;
+
+    // Clean up exiting events after animation
+    const timeout = setTimeout(() => {
+      setAnimatedEvents((currentAnimated) =>
+        currentAnimated.filter((event) => event.animationState !== 'exiting')
+      );
+      setAnimationDirection(null); // Reset direction after animation
+    }, 5000); // Match CSS transition duration
+
+    return () => clearTimeout(timeout);
+  }, [eventsToShow, sortedEvents]);
+
+  useEffect(() => {
+    setAnimatedEvents(eventsToShow.map(event => ({ ...event, animationState: 'idle' })));
+  }, [eventsToShow]);
+
   useMemo(() => {
     setCurrentIndex(initialIndex);
   }, [initialIndex]);
@@ -77,10 +125,12 @@ export default function EventsList({ events }: { events: Event[] }) {
     setCurrentIndex((prev) => Math.min(sortedEvents.length - 3, prev + 3));
   };
 
+  const handleSelect = (slug: string) => {
+    setSelectedEventSlug(selectedEventSlug === slug ? null : slug);
+  };
+
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex + 3 < sortedEvents.length;
-
-  const eventsToShow = sortedEvents.slice(currentIndex, currentIndex + 3);
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -103,10 +153,30 @@ export default function EventsList({ events }: { events: Event[] }) {
 
       {events.length === 0 ? (
         <p className="text-center text-gray-400 py-12">No events found.</p>
+      ) : selectedEventSlug ? (
+        <div className="flex justify-center items-center h-full">
+          {animatedEvents.filter(event => event.slug === selectedEventSlug).map((event) => (
+            <EventCard
+              key={`${event.slug}-${event.animationState}`}
+              event={event}
+              faded={isPast(event)}
+              className={`w-full max-w-lg ${event.animationState === 'entering' ? 'animate-fade-in' : ''}
+                         ${event.animationState === 'exiting' ? 'animate-fade-out' : ''}`}
+              onSelect={handleSelect}
+            />
+          ))}
+        </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {eventsToShow.map((event) => (
-            <EventCard key={event.slug} event={event} faded={isPast(event)} />
+          {animatedEvents.map((event) => (
+            <EventCard
+              key={`${event.slug}-${event.animationState}`}
+              event={event}
+              faded={isPast(event)}
+              className={`${event.animationState === 'entering' ? 'animate-fade-in' : ''}
+                         ${event.animationState === 'exiting' ? 'animate-fade-out' : ''}`}
+              onSelect={handleSelect}
+            />
           ))}
         </div>
       )}

@@ -23,6 +23,8 @@ export default function ManageToppingsPage() {
       apiPath: "/api/content/toppings",
     });
 
+  console.log("ManageToppingsPage data:", data);
+
   const [editingItem, setEditingItem] = useState<{
     categoryIndex: number;
     itemIndex: number;
@@ -161,62 +163,67 @@ export default function ManageToppingsPage() {
         </button>
       </div>
       <div className="space-y-6">
-        {data.categories.map((category, catIndex) => (
-          <div key={category.name} className="p-4 border rounded-md bg-white">
-            <div className="flex justify-between items-center border-b pb-2 mb-4">
-              <h3 className="text-xl font-bold">{category.name}</h3>
-              <button
-                type="button"
-                onClick={() => handleRemoveCategory(catIndex)}
-                className="text-sm text-red-500 hover:text-red-700"
-              >
-                Delete Category
-              </button>
-            </div>
-            <div className="space-y-4">
-              {category.items.map((item, itemIndex) => (
-                <div
-                  key={`${catIndex}-${itemIndex}`}
-                  className="flex justify-between items-center p-2 border-b last:border-b-0"
+        {data.categories.length === 0 ? (
+          <p className="text-center text-gray-500 py-12">No topping categories found. Add a new category to get started.</p>
+        ) : (
+          data.categories.map((category, catIndex) => (
+            <div key={category.name} className="p-4 border rounded-md bg-white">
+              <div className="flex justify-between items-center border-b pb-2 mb-4">
+                <h3 className="text-xl font-bold">{category.name}</h3>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveCategory(catIndex)}
+                  className="text-sm text-red-500 hover:text-red-700"
                 >
-                  <div>
-                    <p className="font-semibold">{item.name}</p>
-                    {item.description && (
-                      <p className="text-sm text-gray-500">{item.description}</p>
-                    )}
+                  Delete Category
+                </button>
+              </div>
+              <div className="space-y-4">
+                {category.items.map((item, itemIndex) => (
+                  <div
+                    key={`${catIndex}-${itemIndex}`}
+                    className="flex justify-between items-center p-2 border-b last:border-b-0"
+                  >
+                    <div>
+                      <p className="font-semibold">{item.name}</p>
+                      {item.description && (
+                        <p className="text-sm text-gray-500">{item.description}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          console.log("Editing item at:", { categoryIndex: catIndex, itemIndex: itemIndex });
+                          setEditingItem({ categoryIndex: catIndex, itemIndex: itemIndex });
+                        }}
+                        className="px-3 py-1 bg-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-300"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(catIndex, itemIndex)}
+                        className="px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-md hover:bg-red-600"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setEditingItem({ categoryIndex: catIndex, itemIndex: itemIndex })
-                      }
-                      className="px-3 py-1 bg-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-300"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(catIndex, itemIndex)}
-                      className="px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-md hover:bg-red-600"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => handleAddItem(catIndex)}
+                  className="px-3 py-1 bg-blue-500 text-white text-sm font-semibold rounded-md hover:bg-blue-600"
+                >
+                  + Add Topping
+                </button>
+              </div>
             </div>
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={() => handleAddItem(catIndex)}
-                className="px-3 py-1 bg-blue-500 text-white text-sm font-semibold rounded-md hover:bg-blue-600"
-              >
-                + Add Topping
-              </button>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
       <div className="mt-8 flex justify-between items-center gap-4">
         <button

@@ -15,7 +15,7 @@ interface CoffeeCategory {
 }
 
 interface CoffeeData {
-  categories: CoffeeCategory[];
+  sections: CoffeeCategory[];
 }
 
 export default function ManageCoffeePage() {
@@ -72,10 +72,10 @@ export default function ManageCoffeePage() {
     });
 
     if (categoryIndex === newCategoryIndex) {
-      newData.categories[categoryIndex].items[itemIndex] = newItemData;
+      newData.sections[categoryIndex].items[itemIndex] = newItemData;
     } else {
-      newData.categories[categoryIndex].items.splice(itemIndex, 1);
-      newData.categories[newCategoryIndex].items.push(newItemData);
+      newData.sections[categoryIndex].items.splice(itemIndex, 1);
+      newData.sections[newCategoryIndex].items.push(newItemData);
     }
 
     setData(newData);
@@ -87,7 +87,7 @@ export default function ManageCoffeePage() {
   const handleAddItem = (categoryIndex: number) => {
     if (!data) return;
     const newData = JSON.parse(JSON.stringify(data));
-    const categoryItems = newData.categories[categoryIndex].items;
+    const categoryItems = newData.sections[categoryIndex].items;
     categoryItems.push({ name: "", description: "", price: undefined });
     setData(newData);
     setEditingItem({ categoryIndex: categoryIndex, itemIndex: categoryItems.length - 1 });
@@ -97,7 +97,7 @@ export default function ManageCoffeePage() {
     if (!data) return;
     if (!confirm("Are you sure you want to delete this item?")) return;
     const newData = JSON.parse(JSON.stringify(data));
-    newData.categories[categoryIndex].items.splice(itemIndex, 1);
+    newData.sections[categoryIndex].items.splice(itemIndex, 1);
     setData(newData);
   };
 
@@ -106,14 +106,14 @@ export default function ManageCoffeePage() {
     const categoryName = prompt("Enter new category name:");
     if (categoryName) {
       const newData = JSON.parse(JSON.stringify(data));
-      newData.categories.push({ name: categoryName, items: [] });
+      newData.sections.push({ name: categoryName, items: [] });
       setData(newData);
     }
   };
 
   const handleRemoveCategory = (categoryIndex: number) => {
     if (!data) return;
-    const category = data.categories[categoryIndex];
+    const category = data.sections[categoryIndex];
     const itemsCount = category.items.length;
 
     let warningMessage = `Are you sure you want to permanently delete the "${category.name}" category?`;
@@ -131,12 +131,12 @@ export default function ManageCoffeePage() {
     if (finalConfirmation !== confirmationText) return;
 
     const newData = JSON.parse(JSON.stringify(data));
-    newData.categories.splice(categoryIndex, 1);
+    newData.sections.splice(categoryIndex, 1);
     setData(newData);
   };
 
   const currentlyEditingItem = editingItem
-    ? data?.categories[editingItem.categoryIndex].items[editingItem.itemIndex]
+    ? data?.sections[editingItem.categoryIndex].items[editingItem.itemIndex]
     : null;
 
   if (loading) return <main style={{ padding: 24 }}>Loading coffee menu…</main>;
@@ -155,7 +155,7 @@ export default function ManageCoffeePage() {
         </button>
       </div>
       <div className="space-y-6">
-        {data.categories.map((category, catIndex) => (
+        {data.sections.map((category, catIndex) => (
           <div key={category.name} className="p-4 border rounded-md bg-white">
             <div className="flex justify-between items-center border-b pb-2 mb-4">
               <h3 className="text-xl font-bold">{category.name}</h3>
@@ -321,7 +321,7 @@ export default function ManageCoffeePage() {
                   defaultValue={editingItem.categoryIndex}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 >
-                  {data.categories.map((cat, index) => (
+                  {data.sections.map((cat, index) => (
                     <option key={index} value={index}>
                       {cat.name}
                     </option>

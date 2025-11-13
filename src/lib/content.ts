@@ -51,7 +51,7 @@ export async function getGeneralSettings(options?: RequestInit): Promise<General
 }
 
 export async function getEvents(options?: RequestInit): Promise<Event[]> {
-  const res = await fetch(`${getSiteURL()}/api/content/events`, {
+  const res = await fetch(`${getSiteURL()}/api/content/events?full=true`, {
     ...options,
   });
   if (!res.ok) {

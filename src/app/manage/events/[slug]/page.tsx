@@ -200,7 +200,7 @@ export default function EditEventPage() {
           <h2 className="text-xl font-semibold mb-4">Event Image</h2>
           {(data.image && data.image.startsWith('/')) && (
             <div className="relative w-full max-w-sm mx-auto mb-4" style={{ aspectRatio: "8.5 / 11" }}>
-              <Image src={data.image} alt={data.title} fill className="object-cover rounded-md" />
+              <Image src={data.image} alt={data.title} fill className="object-contain rounded-md" />
             </div>
           )}
           <div 

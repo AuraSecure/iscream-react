@@ -60,7 +60,7 @@ export default async function MenuPage() {
         {/* -- Beverages -- */}
         <div id="coffee" className="mb-16 scroll-mt-24">
           <h2 className="text-4xl font-bold text-center text-hot-pink mb-8">Beverages</h2>
-          {menu.coffee.categories.map((cat) => (
+          {menu.coffee.sections.map((cat) => (
             <MenuSection key={cat.name} category={cat} />
           ))}
         </div>

@@ -13,6 +13,7 @@ export class GitHubAPIError extends Error {
  * It expects a path relative to the repository's contents, e.g., "content/settings/general.json".
  */
 export async function gh<T>(path: string, init?: RequestInit): Promise<T> {
+  console.log("gh function received path:", path);
   const owner = process.env.GITHUB_OWNER;
   const repo = process.env.GITHUB_REPO;
   const token = process.env.GITHUB_TOKEN;
@@ -22,6 +23,7 @@ export async function gh<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   const url = `${GITHUB_API}/repos/${owner}/${repo}/contents/${path}`;
+  console.log("Fetching GitHub URL:", url);
 
   const finalInit: RequestInit = { ...init, cache: "no-store" };
 

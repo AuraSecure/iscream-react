@@ -16,7 +16,7 @@ export async function GET(request: Request) {
             "utf-8"
           );
           const json = JSON.parse(content);
-          return { ...json, slug: file.name.replace(".json", ""), sha: fileData.sha };
+          return { ...json, date: json.date || "", slug: file.name.replace(".json", ""), sha: fileData.sha };
         })
       );
       return NextResponse.json({ events });

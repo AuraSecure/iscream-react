@@ -12,7 +12,6 @@ export default async function HomePage() {
           alt="I Scream Ice Cream Logo"
           width={80}
           height={80}
-          className="h-auto"
           priority
         />
         <h1 className="text-5xl font-bold">{settings.businessName}</h1>

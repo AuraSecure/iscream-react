@@ -46,6 +46,7 @@ export function useContentManager<T>({
         return r.text().then((text) => (text ? JSON.parse(text) : {}));
       })
       .then((fetchedData) => {
+        console.log("useContentManager: apiPath", apiPath, "fetchedData:", fetchedData);
         if (fetchedData.error) {
           setMsg(`❌ Failed to load content: ${fetchedData.error}`);
         } else {
