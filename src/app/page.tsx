@@ -5,7 +5,7 @@ export default async function HomePage() {
   const settings = await getGeneralSettings();
 
   return (
-    <main className="flex flex-col items-center justify-center p-8 text-center">
+    <main className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center p-8 text-center bg-hot-pink">
       <div className="flex items-center gap-4 mb-4">
         <Image
           src="/logo.png"
@@ -13,17 +13,14 @@ export default async function HomePage() {
           width={80}
           height={80}
           priority
+          className="[filter:drop-shadow(0_0_8px_#FF007F)]"
         />
-        <h1 className="text-5xl font-bold">{settings.businessName}</h1>
+        <h1 className="text-7xl font-heading text-cream-white drop-shadow-lg uppercase tracking-wider [text-shadow:1px_1px_2px_#333333]">
+          {settings.businessName}
+        </h1>
       </div>
-      <p className="text-lg text-gray-600">Welcome to our site!</p>
-      <div className="mt-8">
-        <a href="/manage" className="text-blue-600 hover:underline inline-block">
-          Go to Manage
-        </a>
-      </div>
+      <p className="text-lg text-cream-white/90">{settings.tagline}</p>
+      <p className="text-lg text-cream-white/90 mt-2">{settings.phone}</p>
     </main>
   );
 }
-
-//edited 10/22/25

@@ -1,10 +1,8 @@
-"use client";
-
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useContentManager } from "@/hooks/useContentManager";
 import EventRecurrenceForm from "@/components/manage/EventRecurrenceForm";
+import { ImageUploader } from "@/components/manage/ImageUploader";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
 import type { Event } from "@/lib/content";
 
 // The data structure for a single event, matching our content model.
@@ -17,9 +15,6 @@ export default function EditEventPage() {
   const params = useParams();
   const slug = params.slug as string;
   const isNew = slug === "new";
-  const [isUploading, setIsUploading] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Disable the hook from running on "new" pages since there's nothing to fetch.
   const {
@@ -52,55 +47,6 @@ export default function EditEventPage() {
 
   // For a new event, we manually control the saving state.
   const saving = isSavingExisting;
-
-  const processImageUpload = async (file: File) => {
-    if (!file) return;
-    setIsUploading(true);
-    try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        const base64Content = (reader.result as string).split(",")[1];
-        const res = await fetch("/api/content/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: file.name, content: base64Content }),
-        });
-        if (!res.ok) throw new Error(await res.text());
-        const { path } = await res.json();
-        handleInputChange("image", path);
-      };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Upload failed";
-      console.error(message);
-      setMsg(`❌ Image upload failed: ${message}`);
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    processImageUpload(e.target.files?.[0] as File);
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    processImageUpload(e.dataTransfer.files?.[0] as File);
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
 
   const handleInputChange = (
     field: keyof EventData,
@@ -196,34 +142,11 @@ export default function EditEventPage() {
         </div>
 
         {/* Image Uploader */}
-        <div className="p-4 border rounded-md bg-white">
-          <h2 className="text-xl font-semibold mb-4">Event Image</h2>
-          {(data.image && data.image.startsWith('/')) && (
-            <div className="relative w-full max-w-sm mx-auto mb-4" style={{ aspectRatio: "8.5 / 11" }}>
-              <Image src={data.image} alt={data.title} fill className="object-contain rounded-md" />
-            </div>
-          )}
-          <div 
-            onClick={() => fileInputRef.current?.click()}
-            onDrop={handleDrop} 
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            className={`mt-2 flex cursor-pointer justify-center rounded-lg border border-dashed px-6 py-10 ${
-              isDragging ? 'border-blue-600 bg-blue-50' : 'border-gray-900/25 hover:border-blue-500'
-            }`}>
-            <div className="text-center">
-              <div className="mt-4 flex text-sm leading-6 text-gray-600">
-                <p className="relative rounded-md bg-white font-semibold text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2 hover:text-blue-500">
-                  <span>Upload a file</span>
-                </p>
-                <p className="pl-1">or drag and drop</p>
-                <input ref={fileInputRef} id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileSelect} />
-              </div>
-              <p className="text-xs leading-5 text-gray-600">PNG, JPG up to 10MB</p>
-            </div>
-          </div>
-          {isUploading && <p className="text-sm text-gray-500 mt-2">Uploading...</p>}
-        </div>
+        <ImageUploader
+          title="Event Image"
+          initialImage={data.image}
+          onUpload={(path) => handleInputChange("image", path)}
+        />
 
         {/* Recurrence Rules */}
         <div className="p-4 border rounded-md bg-white">

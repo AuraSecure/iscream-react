@@ -302,6 +302,7 @@ export default function ManageFoodPage() {
                     id="price"
                     name="price"
                     step="0.01"
+                    min="0"
                     defaultValue={currentlyEditingItem.price}
                     className="mt-1 block w-full input"
                   />

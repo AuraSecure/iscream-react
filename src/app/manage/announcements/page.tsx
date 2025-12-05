@@ -22,7 +22,7 @@ export default function ManageAnnouncementsPage() {
         if (data.error) {
           setError(data.error);
         } else {
-          setAnnouncements(Array.isArray(data) ? data : []);
+          setAnnouncements(Array.isArray(data.json) ? data.json : []);
         }
         setLoading(false);
       })
@@ -46,7 +46,7 @@ export default function ManageAnnouncementsPage() {
 
       if (!res.ok) throw new Error(await res.text());
 
-      can; // Remove the deleted announcement from the local state to update the UI instantly.
+      // Remove the deleted announcement from the local state to update the UI instantly.
       setAnnouncements((prev) => prev.filter((a) => a.slug !== slug));
     } catch (e) {
       alert(`Failed to delete announcement: ${e instanceof Error ? e.message : String(e)}`);

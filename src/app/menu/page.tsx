@@ -1,23 +1,30 @@
 import { getMenuData } from "@/lib/content/menu";
 import { MenuSection } from "@/components/menu/MenuSection";
+import { BackToTopButton } from "@/components/BackToTopButton";
 
 const menuSections = [
-  { id: "creations", title: "Ice Cream Creations" },
-  { id: "flavors", title: "Classic Scoops & Cones" },
+  { id: "flavors", title: "Flavors" },
+  { id: "creations", title: "Sundaes & Splits" },
+  { id: "drinks", title: "Shakes, Malts & Floats" },
+  { id: "coffee", title: "Specialty Coffee & Affogato" },
+  { id: "food", title: "Hot Dogs & Treats" },
   { id: "toppings", title: "Toppings & Extras" },
-  { id: "coffee", title: "Coffee & Espresso" },
-  { id: "drinks", title: "Drinks & Floats" },
-  { id: "food", title: "Food & Snacks" },
 ];
 
 export default async function MenuPage() {
   const menu = await getMenuData();
+  const flavorCount = menu.flavors.categories.reduce(
+    (total, category) => total + category.items.length,
+    0
+  );
 
   return (
-    <main className="bg-cream min-h-screen">
+    <main className="bg-hot-pink min-h-screen">
       <div className="max-w-4xl mx-auto p-4 sm:p-8 md:p-12">
-        <h1 className="text-5xl font-extrabold text-center mb-4 text-deep-magenta">Our Menu</h1>
-        <p className="text-center text-lg text-dark-magenta/80 mb-12">
+        <h1 className="text-6xl font-heading text-center mb-4 text-cream-white drop-shadow-lg">
+          Our Menu
+        </h1>
+        <p className="text-center text-lg text-cream-white/90 mb-12">
           Classic scoops, sundaes, and rotating flavors. Ask in-shop for today’s specials!
         </p>
 
@@ -27,57 +34,101 @@ export default async function MenuPage() {
             <a
               key={section.id}
               href={`#${section.id}`}
-              className="px-4 py-2 bg-hot-pink/20 text-deep-magenta font-semibold rounded-full hover:bg-hot-pink/40 transition-colors"
+              className="px-4 py-2 bg-electric-aqua text-charcoal-gray font-bold rounded-full hover:bg-cream-white shadow-md transition-all transform hover:scale-105"
             >
               {section.title}
             </a>
           ))}
         </nav>
 
-        {/* -- Ice Cream Creations -- */}
-        <div id="creations" className="mb-16 scroll-mt-24">
-          <h2 className="text-4xl font-bold text-center text-hot-pink mb-8">Ice Cream Creations</h2>
-          {menu.creations.categories.map((cat) => (
-            <MenuSection key={cat.name} category={cat} />
-          ))}
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          {/* Left Column */}
+          <div className="flex flex-col gap-12">
+            {/* -- Scoops, Cups & Cones -- */}
+            <div
+              id="flavors"
+              className="scroll-mt-24 bg-cream-white/90 text-charcoal-gray rounded-2xl shadow-lg p-6"
+            >
+              <h2 className="text-4xl font-heading text-center text-hot-pink mb-6">
+                🍦 Our {flavorCount} Flavors
+              </h2>
+              {menu.flavors.categories.map((cat) => (
+                <MenuSection key={cat.name} category={cat} />
+              ))}
+            </div>
 
-        {/* -- Flavors & Toppings -- */}
-        <div id="flavors" className="mb-16 scroll-mt-24">
-          <h2 className="text-4xl font-bold text-center text-hot-pink mb-8">
-            Classic Scoops, Cones, & Toppings
-          </h2>
-          {menu.flavors.categories.map((cat) => (
-            <MenuSection key={cat.name} category={cat} />
-          ))}
-        </div>
-        <div id="toppings" className="mb-16 scroll-mt-24">
-          {menu.toppings.categories.map((cat) => (
-            <MenuSection key={cat.name} category={cat} />
-          ))}
-        </div>
+            {/* -- Ice Cream Creations -- */}
+            <div
+              id="creations"
+              className="scroll-mt-24 bg-cream-white/90 text-charcoal-gray rounded-2xl shadow-lg p-6"
+            >
+              <h2 className="text-4xl font-heading text-center text-hot-pink mb-6">
+                🍨 Sundaes & Splits
+              </h2>
+              {menu.creations.categories.map((cat) => (
+                <MenuSection key={cat.name} category={cat} />
+              ))}
+            </div>
 
-        {/* -- Beverages -- */}
-        <div id="coffee" className="mb-16 scroll-mt-24">
-          <h2 className="text-4xl font-bold text-center text-hot-pink mb-8">Beverages</h2>
-          {menu.coffee.sections.map((cat) => (
-            <MenuSection key={cat.name} category={cat} />
-          ))}
-        </div>
-        <div id="drinks" className="mb-16 scroll-mt-24">
-          {menu.drinks.categories.map((cat) => (
-            <MenuSection key={cat.name} category={cat} />
-          ))}
-        </div>
+            {/* -- Shakes, Malts & Floats -- */}
+            <div
+              id="drinks"
+              className="scroll-mt-24 bg-cream-white/90 text-charcoal-gray rounded-2xl shadow-lg p-6"
+            >
+              <h2 className="text-4xl font-heading text-center text-hot-pink mb-6">
+                🥤 Shakes, Malts & Floats
+              </h2>
+              {menu.drinks.categories.map((cat) => (
+                <MenuSection key={cat.name} category={cat} />
+              ))}
+            </div>
+          </div>
 
-        {/* -- Food -- */}
-        <div id="food" className="mb-16 scroll-mt-24">
-          <h2 className="text-4xl font-bold text-center text-hot-pink mb-8">Food & Snacks</h2>
-          {menu.food.categories.map((cat) => (
-            <MenuSection key={cat.name} category={cat} />
-          ))}
+          {/* Right Column */}
+          <div className="flex flex-col gap-12">
+            {/* -- Toppings & Extras -- */}
+            <div
+              id="toppings"
+              className="scroll-mt-24 bg-cream-white/90 text-charcoal-gray rounded-2xl shadow-lg p-6"
+            >
+              <h2 className="text-4xl font-heading text-center text-hot-pink mb-6">
+                🎉 Toppings & Extras
+              </h2>
+              {menu.toppings.categories.map((cat) => (
+                <MenuSection key={cat.name} category={cat} />
+              ))}
+            </div>
+
+            {/* -- Specialty Coffee & Affogato -- */}
+            <div
+              id="coffee"
+              className="scroll-mt-24 bg-cream-white/90 text-charcoal-gray rounded-2xl shadow-lg p-6"
+            >
+              <h2 className="text-4xl font-heading text-center text-hot-pink mb-6">
+                ☕ Specialty Coffee & Affogato
+              </h2>
+              {menu.coffee.sections.map((cat) => (
+                <MenuSection key={cat.name} category={cat} />
+              ))}
+            </div>
+
+            {/* -- Hot Dogs & Treats -- */}
+            <div
+              id="food"
+              className="scroll-mt-24 bg-cream-white/90 text-charcoal-gray rounded-2xl shadow-lg p-6"
+            >
+              <h2 className="text-4xl font-heading text-center text-hot-pink mb-6">
+                🌭 Hot Dogs & Treats
+              </h2>
+              {menu.food.categories.map((cat) => (
+                <MenuSection key={cat.name} category={cat} />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
+      <BackToTopButton />
     </main>
   );
 }
+

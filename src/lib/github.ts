@@ -42,16 +42,21 @@ export async function gh<T>(path: string, init?: RequestInit): Promise<T> {
     (finalInit.headers as Record<string, string>)["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(url, finalInit);
+  try {
+    const res = await fetch(url, finalInit);
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new GitHubAPIError(`GitHub API Error (${res.status}): ${text}`, res.status);
-  }
+    if (!res.ok) {
+      const text = await res.text();
+      throw new GitHubAPIError(`GitHub API Error (${res.status}): ${text}`, res.status);
+    }
 
-  // Handle successful but empty responses (like from a DELETE request)
-  if (res.status === 204 || res.headers.get("content-length") === "0") {
-    return null as T;
+    // Handle successful but empty responses (like from a DELETE request)
+    if (res.status === 204 || res.headers.get("content-length") === "0") {
+      return null as T;
+    }
+    return res.json() as Promise<T>;
+  } catch (error) {
+    console.error("Fetch failed in gh function:", error);
+    throw error;
   }
-  return res.json() as Promise<T>;
 }

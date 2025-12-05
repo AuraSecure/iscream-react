@@ -19,11 +19,12 @@ export async function GET(request: Request) {
           return { ...json, date: json.date || "", slug: file.name.replace(".json", ""), sha: fileData.sha };
         })
       );
-      return NextResponse.json({ events });
+      return NextResponse.json({ json: events });
     } else {
-      return NextResponse.json({ events: files });
+      return NextResponse.json({ json: files });
     }
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Error in events API route:", error);
+    return NextResponse.json({ error: error.message, details: error }, { status: 500 });
   }
 }

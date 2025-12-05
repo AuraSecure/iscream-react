@@ -5,3 +5,54 @@
 body {
   @apply bg-hot-pink;
 }
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoom-in {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes zoom-out {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(0);
+  }
+}
+
+.animate-zoom-in {
+  animation: zoom-in 0.3s ease-out forwards;
+}
+
+.animate-zoom-out {
+  animation: zoom-out 0.3s ease-in forwards;
+}
+
+.transform-origin-top-left {
+  transform-origin: top left;
+}
+
+.transform-origin-top-center {
+  transform-origin: top center;
+}
+
+.transform-origin-top-right {
+  transform-origin: top right;
+}
+
+.blob {
+  clip-path: polygon(50% 0%, 83% 12%, 100% 43%, 94% 78%, 68% 100%, 32% 100%, 0% 70%, 0% 30%);
+}

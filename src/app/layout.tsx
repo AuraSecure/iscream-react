@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import Image from "next/image";
 import { getGeneralSettings } from "@/lib/content";
 import { Announcements } from "@/components";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getGeneralSettings();
@@ -20,34 +18,62 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-hot-pink text-dark-magenta`}>
-        <nav className="sticky top-0 z-50 bg-deep-magenta p-4 flex justify-between items-center shadow-lg h-16">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito+Sans:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className={`font-body bg-hot-pink text-charcoal-gray`}>
+        <nav className="sticky top-0 z-50 bg-hot-pink p-4 flex justify-between items-center shadow-lg h-16">
           <div>
             <Link
               href="/"
-              className="font-bold text-xl text-white hover:text-brand-yellow transition-colors"
+              className="font-heading text-2xl text-cream-white hover:text-electric-aqua transition-colors uppercase"
             >
               {settings.businessName}
             </Link>
           </div>
-          <div className="flex gap-8">
+          <div className="flex gap-8 items-center">
             <Link
               href="/menu"
-              className="text-white hover:text-brand-yellow font-bold tracking-wider uppercase transition-colors"
+              className="text-cream-white hover:text-electric-aqua font-bold tracking-wider uppercase transition-colors"
             >
               Menu
             </Link>
             <Link
               href="/events"
-              className="text-white hover:text-brand-yellow font-bold tracking-wider uppercase transition-colors"
+              className="text-cream-white hover:text-electric-aqua font-bold tracking-wider uppercase transition-colors"
             >
               Events
             </Link>
             <Link
+              href="/parties"
+              className="text-cream-white hover:text-electric-aqua font-bold tracking-wider uppercase transition-colors"
+            >
+              Birthday Parties
+            </Link>
+            <Link
+              href="/fundraisers"
+              className="text-cream-white hover:text-electric-aqua font-bold tracking-wider uppercase transition-colors"
+            >
+              Fundraising
+            </Link>
+            <Link
               href="/contact"
-              className="text-white hover:text-brand-yellow font-bold tracking-wider uppercase transition-colors"
+              className="text-cream-white hover:text-electric-aqua font-bold tracking-wider uppercase transition-colors"
             >
               Contact
+            </Link>
+            <Link href="/">
+              <Image
+                src="/logo.png"
+                alt="I Scream Ice Cream Logo"
+                width={40}
+                height={40}
+              />
             </Link>
           </div>
         </nav>

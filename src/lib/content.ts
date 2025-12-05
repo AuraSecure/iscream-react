@@ -1,9 +1,11 @@
 export interface GeneralSettings {
   businessName: string;
+  tagline: string;
   address: string;
   email: string;
   instagram: string;
   hours: string;
+  phone: string;
 }
 
 export interface Event {
@@ -33,6 +35,13 @@ export interface Announcement {
   endDate: string;
 }
 
+export interface Fundraiser {
+  slug: string;
+  title: string;
+  text: string;
+  images: string[];
+}
+
 export interface PartyInfo {
   text: string;
 }
@@ -58,7 +67,7 @@ export async function getEvents(options?: RequestInit): Promise<Event[]> {
     throw new Error("Failed to fetch events");
   }
   const data = await res.json();
-  return data.events;
+  return data.json;
 }
 
 export async function getAnnouncements(options?: RequestInit): Promise<Announcement[]> {
@@ -68,7 +77,8 @@ export async function getAnnouncements(options?: RequestInit): Promise<Announcem
   if (!res.ok) {
     throw new Error("Failed to fetch announcements");
   }
-  const announcements: Announcement[] = await res.json();
+  const data = await res.json();
+  const announcements: Announcement[] = data.json;
 
   // Filter for active announcements on the server
   const now = new Date();
@@ -82,6 +92,17 @@ export async function getAnnouncements(options?: RequestInit): Promise<Announcem
     endDate.setHours(23, 59, 59, 999);
     return now >= startDate && now <= endDate;
   });
+}
+
+export async function getFundraisers(options?: RequestInit): Promise<Fundraiser[]> {
+  const res = await fetch(`${getSiteURL()}/api/content/fundraisers?full=true`, {
+    ...options,
+  });
+  if (!res.ok) {
+    throw new Error("Failed to fetch fundraisers");
+  }
+  const data = await res.json();
+  return data.json;
 }
 
 export async function getPartyInfo(options?: RequestInit): Promise<PartyInfo> {

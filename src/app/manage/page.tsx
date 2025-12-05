@@ -17,6 +17,11 @@ const managementSections = [
     description: "Site-wide banners and pop-ups.",
   },
   {
+    name: "Fundraisers",
+    href: "/manage/fundraisers",
+    description: "Manage fundraiser events.",
+  },
+  {
     name: "Manage Menu",
     href: "/manage/menu",
     description: "Edit all menu items, including flavors, toppings, and food.",

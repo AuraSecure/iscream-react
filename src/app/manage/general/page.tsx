@@ -32,7 +32,7 @@ export default function ManageGeneralPage() {
     <section className="bg-gray-100 p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold mb-4">General Settings</h2>
       {(
-        ["businessName", "address", "email", "instagram", "hours"] as (keyof GeneralSettings)[]
+        ["businessName", "tagline", "address", "email", "instagram", "hours", "phone"] as (keyof GeneralSettings)[]
       ).map((k) => (
         <div key={k} className="mb-4">
           <label className="block font-medium text-gray-700 capitalize mb-1">{k}</label>

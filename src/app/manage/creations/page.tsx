@@ -324,6 +324,7 @@ export default function ManageCreationsPage() {
                     id="price"
                     name="price"
                     step="0.01"
+                    min="0"
                     defaultValue={currentlyEditingItem.price}
                     className="mt-1 block w-full input"
                   />
@@ -365,6 +366,7 @@ export default function ManageCreationsPage() {
                       id="flavorsAllowed"
                       name="flavorsAllowed"
                       step="1"
+                      min="0"
                       defaultValue={currentlyEditingItem.flavorsAllowed}
                       className="mt-1 block w-full input"
                     />
@@ -381,6 +383,7 @@ export default function ManageCreationsPage() {
                       id="freeToppings"
                       name="freeToppings"
                       step="1"
+                      min="0"
                       defaultValue={currentlyEditingItem.freeToppings}
                       className="mt-1 block w-full input"
                     />

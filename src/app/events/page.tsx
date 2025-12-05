@@ -11,8 +11,8 @@ export default async function EventsPage() {
   );
 
   return (
-    <main className="min-h-screen bg-[#111] text-white p-6 md:p-12">
-      <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-8 text-[#ff3b7f] drop-shadow-md">
+    <main className="min-h-screen bg-electric-aqua text-charcoal-gray p-6 md:p-12">
+      <h1 className="text-5xl md:text-6xl font-heading text-center mb-8 text-charcoal-gray drop-shadow-md">
         Upcoming Events
       </h1>
       <EventsList events={sorted} />

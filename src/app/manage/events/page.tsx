@@ -1,6 +1,6 @@
 "use client";
 import { formatDate } from "@/lib/date";
-
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -10,6 +10,7 @@ interface EventStub {
   sha: string;
   title: string;
   date: string;
+  image: string; // Make sure the image property is expected
 }
 
 export default function ManageEventsPage() {
@@ -24,8 +25,6 @@ export default function ManageEventsPage() {
         if (data.error) {
           setError(data.error);
         } else {
-          // The API returns the list under an "events" key.
-          // Also, check if the response itself is an array for robustness.
           const eventList = data.events || (Array.isArray(data) ? data : []);
           setEvents(eventList);
         }
@@ -49,7 +48,6 @@ export default function ManageEventsPage() {
 
       if (!res.ok) throw new Error(await res.text());
 
-      // Remove the event from the local state to update the UI
       setEvents(events.filter((event) => event.slug !== slug));
     } catch (e) {
       alert(`Failed to delete event: ${e instanceof Error ? e.message : String(e)}`);
@@ -82,11 +80,20 @@ export default function ManageEventsPage() {
                 key={event.slug}
                 className="flex justify-between items-center p-4 bg-white rounded-lg border"
               >
-                <div className="flex flex-col">
-                  <span className="font-semibold">{event.title}</span>
-
-
-                  <span className="text-sm text-gray-500">{formatDate(event.date)}</span>
+                <div className="flex items-center gap-4">
+                  {event.image && (
+                    <Image
+                      src={event.image}
+                      alt={event.title}
+                      width={64}
+                      height={64}
+                      className="rounded-md object-cover h-16 w-16"
+                    />
+                  )}
+                  <div className="flex flex-col">
+                    <span className="font-semibold">{event.title}</span>
+                    <span className="text-sm text-gray-500">{formatDate(event.date)}</span>
+                  </div>
                 </div>
                 <div className="flex gap-4">
                   <Link

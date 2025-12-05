@@ -38,7 +38,8 @@ export async function PUT(
 
     return NextResponse.json({ status: "ok" });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Error in events PUT API route:", error);
+    return NextResponse.json({ error: error.message, details: error }, { status: 500 });
   }
 }
 

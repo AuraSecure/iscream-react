@@ -50,7 +50,8 @@ export function useContentManager<T>({
         if (fetchedData.error) {
           setMsg(`❌ Failed to load content: ${fetchedData.error}`);
         } else {
-          const jsonData = fetchedData.json;
+          // Check if the data is wrapped in a 'json' property, otherwise use the data directly
+          const jsonData = fetchedData.json !== undefined ? fetchedData.json : fetchedData;
           setData(jsonData);
           setSha(fetchedData.sha);
           setInitialData(JSON.parse(JSON.stringify(jsonData)));
