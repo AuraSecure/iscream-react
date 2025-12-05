@@ -5,13 +5,3 @@
 body {
   @apply bg-hot-pink;
 }
-
-
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-body {
-  @apply bg-hot-pink;
-}
